@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#2c1810">
+<title>ライフイベント営業支援 — 運営管理</title>
+<style>
+  :root {
+    --bg: #f0eee8; --surface: #ffffff; --ink: #1a1f2e; --ink-soft: #4a5468;
+    --ink-muted: #8b94a8; --border: #e5e1d8; --border-input: #d8d3c5;
+    --accent: #1e3a5f; --urgent: #c84a3a; --urgent-bg: #fdf2f0;
+    --warm: #d97a4a; --warm-bg: #fdf4ec; --success: #5a7a4f; --success-bg: #f0f4ea;
+    --gold: #b8860b; --gold-bg: #faf3e0; --gold-deep: #8b6914;
+    --admin-ink: #2c1810; --admin-accent: #6b4423;
+    --shadow: 0 1px 2px rgba(26,31,46,0.04), 0 2px 8px rgba(26,31,46,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: 'Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; overscroll-behavior: none; }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea, select { font-family: inherit; }
+  .app { max-width: 480px; margin: 0 auto; min-height: 100vh; position: relative; background: var(--bg); }
+  .view { display: none; min-height: 100vh; padding-bottom: 90px; }
+  .view.active { display: block; }
+  .demo-badge { position: fixed; top: env(safe-area-inset-top); right: 8px; z-index: 100; background: var(--gold); color: #fff; font-size: 9px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+  .demo-reset { position: fixed; top: env(safe-area-inset-top); left: 8px; z-index: 100; background: rgba(0,0,0,0.5); color: #fff; border: none; font-size: 9px; padding: 3px 8px; border-radius: 999px; }
+  .admin-header { background: var(--admin-ink); color: #fff; padding: calc(14px + env(safe-area-inset-top)) 16px 14px; position: sticky; top: 0; z-index: 10; }
+  .admin-header-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+  .admin-badge { font-size: 9px; background: var(--gold); color: var(--admin-ink); padding: 2px 8px; border-radius: 999px; font-weight: 700; letter-spacing: 0.1em; }
+  .admin-user { font-size: 11px; opacity: 0.8; display: flex; align-items: center; gap: 6px; }
+  .admin-user-avatar { width: 24px; height: 24px; background: var(--admin-accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+  .admin-title { font-size: 18px; font-weight: 600; margin-top: 6px; }
+  .admin-subtitle { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+  .header-row { display: flex; align-items: center; gap: 12px; }
+  .header-back { width: 32px; height: 32px; background: rgba(255,255,255,0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; border: none; color: #fff; flex-shrink: 0; }
+  .header-title { font-size: 16px; font-weight: 600; flex: 1; }
+  .header-sub { font-size: 11px; opacity: 0.7; margin-top: 1px; }
+  .kpi-grid { padding: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .kpi-card { background: var(--surface); border-radius: 12px; padding: 12px 14px; box-shadow: var(--shadow); }
+  .kpi-card.urgent { border-left: 3px solid var(--urgent); }
+  .kpi-card.warm { border-left: 3px solid var(--warm); }
+  .kpi-card.success { border-left: 3px solid var(--success); }
+  .kpi-card.neutral { border-left: 3px solid var(--accent); }
+  .kpi-label { font-size: 10px; color: var(--ink-muted); font-weight: 700; letter-spacing: 0.05em; margin-bottom: 4px; text-transform: uppercase; }
+  .kpi-value { font-size: 26px; font-weight: 700; color: var(--ink); line-height: 1; }
+  .kpi-unit { font-size: 11px; color: var(--ink-muted); font-weight: 500; margin-left: 2px; }
+  .kpi-sub { font-size: 11px; color: var(--ink-soft); margin-top: 6px; }
+  .section-head { padding: 16px 14px 8px; display: flex; align-items: center; justify-content: space-between; }
+  .section-title { font-size: 13px; font-weight: 700; }
+  .section-title-urgent { color: var(--urgent); }
+  .section-link { font-size: 11px; color: var(--accent); font-weight: 600; background: none; border: none; }
+  .trouble-alert { margin: 0 14px 16px; background: var(--urgent-bg); border: 1px solid #f0c8c0; border-radius: 12px; padding: 12px 14px; display: flex; gap: 10px; align-items: flex-start; text-align: left; width: calc(100% - 28px); }
+  .trouble-alert-icon { width: 28px; height: 28px; background: var(--urgent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+  .trouble-alert-body { flex: 1; }
+  .trouble-alert-title { font-size: 13px; color: var(--urgent); font-weight: 700; margin-bottom: 3px; }
+  .trouble-alert-text { font-size: 11px; color: var(--urgent); line-height: 1.5; opacity: 0.9; }
+  .trouble-alert-btn { background: var(--urgent); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-top: 6px; }
+  .review-queue { padding: 0 14px 16px; }
+  .review-item { background: var(--surface); border-radius: 12px; padding: 14px; margin-bottom: 10px; box-shadow: var(--shadow); border-left: 3px solid var(--warm); text-align: left; width: 100%; display: block; border-top: none; border-right: none; border-bottom: none; }
+  .review-item.deadline-soon { border-left-color: var(--urgent); }
+  .review-item-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .review-shop-name { font-size: 15px; font-weight: 700; color: var(--ink); }
+  .review-shop-meta { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .review-deadline { font-size: 10px; font-weight: 700; padding: 3px 7px; border-radius: 6px; background: var(--warm-bg); color: var(--warm); white-space: nowrap; }
+  .review-deadline.urgent { background: var(--urgent-bg); color: var(--urgent); }
+  .review-recommender { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-soft); padding: 6px 8px; background: var(--bg); border-radius: 6px; margin-bottom: 8px; }
+  .review-recommender-avatar { width: 20px; height: 20px; background: var(--accent); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; }
+  .review-cta { display: flex; align-items: center; justify-content: space-between; }
+  .review-progress { font-size: 10px; color: var(--ink-muted); font-weight: 600; }
+  .review-progress strong { color: var(--ink); }
+  .review-btn { background: var(--accent); color: #fff; border: none; padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; }
+  .admin-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(5,1fr); padding: 6px 0 calc(6px + env(safe-area-inset-bottom)); z-index: 50; max-width: 480px; margin: 0 auto; }
+  .nav-item { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; color: var(--ink-muted); font-size: 9px; font-weight: 600; background: none; border: none; }
+  .nav-item.active { color: var(--admin-accent); }
+  .nav-icon { font-size: 18px; line-height: 1; position: relative; }
+  .nav-badge { position: absolute; top: -4px; right: -8px; background: var(--urgent); color: #fff; font-size: 9px; font-weight: 700; min-width: 14px; height: 14px; padding: 0 4px; border-radius: 999px; display: flex; align-items: center; justify-content: center; }
+  .deadline-banner { background: var(--warm); color: #fff; padding: 8px 16px; font-size: 11px; font-weight: 600; text-align: center; }
+  .deadline-banner.urgent { background: var(--urgent); }
+  .shop-summary { background: var(--surface); margin: 14px; border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .shop-summary-photos { height: 120px; background: linear-gradient(135deg,#8b6f47 0%,#5c4a30 100%); position: relative; display: flex; align-items: flex-end; padding: 10px; }
+  .shop-summary-photos.t2 { background: linear-gradient(135deg,#4a6b4a 0%,#2f4a2f 100%); }
+  .shop-summary-photos.t3 { background: linear-gradient(135deg,#b85c5c 0%,#8b3a3a 100%); }
+  .shop-summary-photos.t4 { background: linear-gradient(135deg,#6b4a8b 0%,#3a2f5c 100%); }
+  .shop-summary-photos.t5 { background: linear-gradient(135deg,#8b8b4a 0%,#5c5c2f 100%); }
+  .shop-summary-photo-count { background: rgba(0,0,0,0.5); color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 6px; font-weight: 600; }
+  .shop-summary-body { padding: 14px; }
+  .shop-summary-name { font-size: 18px; font-weight: 700; color: var(--ink); }
+  .shop-summary-meta { font-size: 12px; color: var(--ink-soft); margin-top: 3px; line-height: 1.5; }
+  .recommend-reason { margin: 0 14px 14px; background: var(--surface); border-radius: 12px; padding: 14px; box-shadow: var(--shadow); }
+  .recommend-reason-label { font-size: 10px; color: var(--warm); font-weight: 700; margin-bottom: 6px; }
+  .recommend-reason-text { font-size: 13px; color: var(--ink); line-height: 1.6; font-family: 'Hiragino Mincho ProN',serif; }
+  .checklist-card { margin: 0 14px 14px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .checklist-header { padding: 14px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: #faf8f3; }
+  .checklist-title { font-size: 13px; font-weight: 700; }
+  .checklist-progress { font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+  .checklist-progress strong { color: var(--success); font-size: 14px; font-weight: 700; }
+  .checklist-item { padding: 12px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 10px; }
+  .checklist-item:last-child { border-bottom: none; }
+  .checklist-checkbox { width: 22px; height: 22px; border: 2px solid var(--border-input); border-radius: 6px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; margin-top: 1px; background: var(--surface); cursor: pointer; }
+  .checklist-checkbox.checked { background: var(--success); border-color: var(--success); color: #fff; font-size: 13px; font-weight: 700; }
+  .checklist-content { flex: 1; }
+  .checklist-label { font-size: 13px; font-weight: 600; color: var(--ink); margin-bottom: 3px; }
+  .checklist-sub { font-size: 11px; color: var(--ink-soft); line-height: 1.5; }
+  .checklist-evidence { margin-top: 6px; padding: 6px 8px; background: var(--success-bg); border-radius: 6px; font-size: 11px; color: var(--success); }
+  .checklist-evidence strong { font-weight: 700; }
+  .checklist-action { margin-top: 6px; display: flex; gap: 6px; flex-wrap: wrap; }
+  .checklist-action-btn { font-size: 11px; color: var(--accent); background: #eef2f7; border: none; padding: 5px 10px; border-radius: 6px; font-weight: 600; }
+  .checklist-action-btn.active { background: var(--accent); color: #fff; }
+  .review-memo { margin: 0 14px 14px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .review-memo-header { padding: 12px 16px; border-bottom: 1px solid var(--border); background: #faf8f3; font-size: 12px; font-weight: 700; }
+  .review-memo-textarea { width: 100%; border: none; outline: none; resize: none; padding: 12px 16px; font-family: inherit; font-size: 13px; line-height: 1.6; color: var(--ink); min-height: 60px; background: transparent; }
+  .verdict-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); z-index: 50; max-width: 480px; margin: 0 auto; box-shadow: 0 -2px 12px rgba(26,31,46,0.08); }
+  .verdict-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 8px; }
+  .verdict-btn-reject { background: var(--surface); color: var(--urgent); border: 1px solid #f0c8c0; padding: 13px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .verdict-btn-approve { background: var(--success); color: #fff; border: none; padding: 13px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .verdict-btn-approve:disabled { background: var(--border); color: var(--ink-muted); }
+  .shop-list-item { background: var(--surface); border-radius: 12px; padding: 12px 14px; margin: 0 14px 8px; box-shadow: var(--shadow); display: flex; gap: 10px; align-items: center; text-align: left; border: none; width: calc(100% - 28px); }
+  .shop-list-thumb { width: 48px; height: 48px; border-radius: 10px; flex-shrink: 0; }
+  .shop-list-thumb.t1 { background: linear-gradient(135deg,#8b6f47 0%,#5c4a30 100%); }
+  .shop-list-thumb.t2 { background: linear-gradient(135deg,#4a6b4a 0%,#2f4a2f 100%); }
+  .shop-list-thumb.t3 { background: linear-gradient(135deg,#b85c5c 0%,#8b3a3a 100%); }
+  .shop-list-thumb.t4 { background: linear-gradient(135deg,#6b4a8b 0%,#3a2f5c 100%); }
+  .shop-list-thumb.t5 { background: linear-gradient(135deg,#8b8b4a 0%,#5c5c2f 100%); }
+  .shop-list-thumb.t6 { background: linear-gradient(135deg,#4a8b8b 0%,#2f5c5c 100%); }
+  .shop-list-body { flex: 1; min-width: 0; }
+  .shop-list-name { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .shop-list-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .shop-list-status { font-size: 10px; padding: 3px 7px; border-radius: 6px; font-weight: 700; background: var(--success-bg); color: var(--success); white-space: nowrap; }
+  .shop-list-status.paused { background: var(--warm-bg); color: var(--warm); }
+  .trouble-status-bar { background: var(--urgent); color: #fff; padding: 10px 16px; font-size: 12px; font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+  .trouble-status-bar.resolved { background: var(--success); }
+  .severity-badge { background: rgba(255,255,255,0.2); padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 700; }
+  .trouble-summary { margin: 14px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; border-left: 3px solid var(--urgent); }
+  .trouble-meta { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--ink-muted); margin-bottom: 8px; }
+  .trouble-id { font-family: 'SF Mono',monospace; color: var(--ink); font-weight: 700; }
+  .trouble-title { font-size: 16px; font-weight: 700; color: var(--ink); margin-bottom: 8px; }
+  .trouble-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+  .trouble-parties { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--border); }
+  .trouble-party-row { display: flex; align-items: center; gap: 10px; padding: 4px 0; font-size: 12px; }
+  .trouble-party-label { font-size: 10px; color: var(--ink-muted); width: 70px; flex-shrink: 0; font-weight: 700; }
+  .trouble-party-value { color: var(--ink); font-weight: 600; }
+  .action-buttons { margin: 0 14px 14px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .action-button { padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; text-align: center; }
+  .action-button-icon { font-size: 18px; color: var(--admin-accent); margin-bottom: 4px; }
+  .action-button-label { font-size: 11px; color: var(--ink); font-weight: 700; }
+  .action-button-sub { font-size: 9px; color: var(--ink-muted); margin-top: 2px; }
+  .timeline-card { margin: 0 14px 14px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); padding: 14px; }
+  .timeline-title { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+  .timeline-item { display: flex; gap: 10px; position: relative; padding-bottom: 14px; }
+  .timeline-item:last-child { padding-bottom: 0; }
+  .timeline-item::before { content: ''; position: absolute; left: 9px; top: 22px; bottom: -4px; width: 2px; background: var(--border); }
+  .timeline-item:last-child::before { display: none; }
+  .timeline-dot { width: 20px; height: 20px; border-radius: 50%; background: var(--admin-accent); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex-shrink: 0; position: relative; z-index: 1; }
+  .timeline-dot.urgent { background: var(--urgent); }
+  .timeline-dot.success { background: var(--success); }
+  .timeline-content { flex: 1; padding-top: 1px; }
+  .timeline-time { font-size: 10px; color: var(--ink-muted); font-weight: 600; }
+  .timeline-text { font-size: 12px; color: var(--ink); line-height: 1.5; margin-top: 2px; }
+  .timeline-actor { font-size: 10px; color: var(--admin-accent); font-weight: 600; margin-top: 3px; }
+  .save-bar { position: fixed; bottom: 0; left: 0; right: 0; background: var(--surface); border-top: 1px solid var(--border); padding: 12px 14px calc(12px + env(safe-area-inset-bottom)); z-index: 50; max-width: 480px; margin: 0 auto; }
+  .save-bar-row { display: flex; gap: 8px; }
+  .save-bar-btn { flex: 1; background: var(--admin-ink); color: #fff; border: none; padding: 13px; border-radius: 10px; font-size: 13px; font-weight: 700; }
+  .save-bar-btn-secondary { background: var(--surface); color: var(--ink-soft); border: 1px solid var(--border-input); padding: 13px 18px; border-radius: 10px; font-size: 12px; font-weight: 600; }
+  .release-hero { margin: 14px; background: linear-gradient(135deg,var(--admin-ink) 0%,var(--admin-accent) 100%); color: #fff; border-radius: 14px; padding: 18px; }
+  .release-version { font-size: 11px; opacity: 0.7; letter-spacing: 0.1em; font-weight: 700; text-transform: uppercase; margin-bottom: 4px; }
+  .release-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .release-meta { font-size: 12px; opacity: 0.7; margin-bottom: 14px; }
+  .release-counts { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; background: rgba(255,255,255,0.08); border-radius: 10px; padding: 10px; }
+  .release-count-cell { text-align: center; }
+  .release-count-num { font-size: 22px; font-weight: 700; color: #ffd9a8; }
+  .release-count-label { font-size: 10px; opacity: 0.7; margin-top: 2px; }
+  .changelog-section { margin: 0 14px 12px; background: var(--surface); border-radius: 12px; box-shadow: var(--shadow); overflow: hidden; }
+  .changelog-header { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: #faf8f3; }
+  .changelog-header-left { display: flex; align-items: center; gap: 8px; }
+  .changelog-icon { width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; }
+  .changelog-icon.added { background: var(--success-bg); color: var(--success); }
+  .changelog-icon.updated { background: var(--warm-bg); color: var(--warm); }
+  .changelog-icon.removed { background: var(--urgent-bg); color: var(--urgent); }
+  .changelog-title { font-size: 12px; font-weight: 700; }
+  .changelog-count { font-size: 10px; background: var(--bg); color: var(--ink-soft); padding: 2px 7px; border-radius: 999px; font-weight: 700; }
+  .changelog-item { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .changelog-item:last-child { border-bottom: none; }
+  .changelog-item-name { font-size: 12px; font-weight: 700; color: var(--ink); }
+  .changelog-item-sub { font-size: 10px; color: var(--ink-soft); margin-top: 1px; }
+  .test-mode-card { margin: 0 14px 14px; background: #fff8e8; border: 1px solid #e0c896; border-radius: 12px; padding: 12px 14px; display: flex; align-items: flex-start; gap: 10px; }
+  .test-mode-icon { width: 28px; height: 28px; background: var(--gold); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .test-mode-title { font-size: 12px; font-weight: 700; color: var(--gold-deep); margin-bottom: 3px; }
+  .test-mode-sub { font-size: 11px; color: var(--admin-accent); line-height: 1.5; }
+  .test-mode-btn { background: var(--surface); border: 1px solid #e0c896; color: var(--gold-deep); padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; margin-top: 6px; }
+  .toast { position: fixed; top: calc(50px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%) translateY(-100px); background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 999px; font-size: 13px; font-weight: 600; z-index: 1000; transition: transform 0.3s; box-shadow: 0 4px 16px rgba(0,0,0,0.2); pointer-events: none; white-space: nowrap; max-width: 90vw; overflow: hidden; text-overflow: ellipsis; }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(26,31,46,0.5); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: flex-end; justify-content: center; }
+  .modal-backdrop.show { display: flex; }
+  .modal { background: var(--surface); width: 100%; max-width: 480px; border-radius: 20px 20px 0 0; padding: 24px 20px calc(24px + env(safe-area-inset-bottom)); }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .modal-body { font-size: 13px; color: var(--ink-soft); line-height: 1.6; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-btn { flex: 1; padding: 12px; border-radius: 10px; font-size: 14px; font-weight: 600; border: none; }
+  .modal-btn.secondary { background: var(--bg); color: var(--ink-soft); border: 1px solid var(--border); }
+  .modal-btn.primary { background: var(--accent); color: #fff; }
+  .modal-btn.danger { background: var(--urgent); color: #fff; }
+  .modal-btn.success { background: var(--success); color: #fff; }
+  .empty-state { text-align: center; padding: 40px 20px; color: var(--ink-muted); font-size: 13px; }
+  .empty-state-icon { font-size: 36px; opacity: 0.3; margin-bottom: 8px; }
+  .demo-help-banner { background: linear-gradient(135deg,#faf3e0 0%,#f5e6c8 100%); border: 1px solid #e0c896; border-radius: 12px; padding: 14px; margin: 12px 14px 0; display: flex; gap: 10px; align-items: flex-start; }
+  .demo-help-icon { width: 28px; height: 28px; background: var(--gold); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; flex-shrink: 0; }
+  .demo-help-body { flex: 1; }
+  .demo-help-title { font-size: 13px; font-weight: 700; color: var(--gold-deep); margin-bottom: 4px; }
+  .demo-help-text { font-size: 11px; color: var(--admin-accent); line-height: 1.5; }
+  .demo-help-text strong { font-weight: 700; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="demo-badge">DEMO MODE</div>
+  <button class="demo-reset" onclick="resetDemo()">↻ デモ初期化</button>
+
+  <!-- 画面1: ダッシュボード -->
+  <section class="view active" id="view-dashboard">
+    <header class="admin-header">
+      <div class="admin-header-top">
+        <span class="admin-badge">運営管理</span>
+        <div class="admin-user"><div class="admin-user-avatar">山</div><span>山田 典広</span></div>
+      </div>
+      <div class="admin-title">こんにちは、山田さん</div>
+      <div class="admin-subtitle" id="adminDate">―</div>
+    </header>
+    <div class="demo-help-banner">
+      <div class="demo-help-icon">i</div>
+      <div class="demo-help-body">
+        <div class="demo-help-title">デモモードで動作中</div>
+        <div class="demo-help-text">審査3件・加盟店4店・トラブル1件のサンプルです。<strong>左上「↻ デモ初期化」</strong>でいつでも元に戻せます。</div>
+      </div>
+    </div>
+    <div class="kpi-grid">
+      <div class="kpi-card urgent"><div class="kpi-label">審査待ち</div><div class="kpi-value" id="kpiPending">0<span class="kpi-unit">件</span></div><div class="kpi-sub" id="kpiPendingSub">―</div></div>
+      <div class="kpi-card success"><div class="kpi-label">加盟店総数</div><div class="kpi-value" id="kpiShops">0<span class="kpi-unit">店</span></div><div class="kpi-sub" id="kpiShopsSub">うち稼働中</div></div>
+      <div class="kpi-card neutral"><div class="kpi-label">営業マン</div><div class="kpi-value">12<span class="kpi-unit">名</span></div><div class="kpi-sub">先月利用 9名</div></div>
+      <div class="kpi-card warm"><div class="kpi-label">クーポン利用</div><div class="kpi-value">23<span class="kpi-unit">/月</span></div><div class="kpi-sub">推計値</div></div>
+    </div>
+    <div id="dashboardTroubleArea"></div>
+    <div class="section-head">
+      <div class="section-title section-title-urgent">● 審査待ちの加盟店申請</div>
+      <button class="section-link" onclick="showView('reviewList')">すべて見る ›</button>
+    </div>
+    <div class="review-queue" id="dashReviewQueue"></div>
+  </section>
+
+  <!-- 審査リスト -->
+  <section class="view" id="view-reviewList">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('dashboard')">‹</button>
+        <div style="flex:1;"><div class="header-title">審査待ち申請</div><div class="header-sub" id="reviewListCount">0 件</div></div>
+      </div>
+    </header>
+    <div class="review-queue" id="reviewListBody" style="padding-top:16px;"></div>
+  </section>
+
+  <!-- 画面2: 加盟店審査 -->
+  <section class="view" id="view-review">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('reviewList')">‹</button>
+        <div><div class="header-title">加盟店審査</div><div class="header-sub" id="reviewSub">―</div></div>
+      </div>
+    </header>
+    <div class="deadline-banner" id="reviewBanner">⏱ 残り 1日</div>
+    <div class="shop-summary">
+      <div class="shop-summary-photos" id="reviewPhotos"><div class="shop-summary-photo-count">📷 外観・店内・料理 3枚提出済</div></div>
+      <div class="shop-summary-body"><div class="shop-summary-name" id="reviewShopName">―</div><div class="shop-summary-meta" id="reviewShopMeta">―</div></div>
+    </div>
+    <div class="recommend-reason"><div class="recommend-reason-label">推薦理由</div><div class="recommend-reason-text" id="reviewReason">―</div></div>
+    <div class="checklist-card">
+      <div class="checklist-header"><div class="checklist-title">審査チェックリスト（7項目）</div><div class="checklist-progress"><strong id="checkProgress">0</strong> / 7</div></div>
+      <div id="checklistBody"></div>
+    </div>
+    <div class="review-memo">
+      <div class="review-memo-header">審査メモ（個人情報含まず）</div>
+      <textarea class="review-memo-textarea" id="reviewMemo" placeholder="店舗の特徴・気になる点を記録"></textarea>
+    </div>
+    <div class="verdict-bar">
+      <div class="verdict-row">
+        <button class="verdict-btn-reject" onclick="rejectReview()">差し戻し</button>
+        <button class="verdict-btn-approve" id="approveBtn" onclick="approveReview()" disabled>承認して加盟登録</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 加盟店リスト -->
+  <section class="view" id="view-shops">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('dashboard')">‹</button>
+        <div><div class="header-title">加盟店一覧</div><div class="header-sub" id="shopsCount">0 店</div></div>
+      </div>
+    </header>
+    <div style="padding:16px 0;" id="shopsList"></div>
+  </section>
+
+  <!-- トラブルリスト -->
+  <section class="view" id="view-troubles">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('dashboard')">‹</button>
+        <div><div class="header-title">トラブル対応</div><div class="header-sub" id="troublesCount">0 件</div></div>
+      </div>
+    </header>
+    <div style="padding:16px 0;" id="troublesList"></div>
+  </section>
+
+  <!-- 画面3: トラブル詳細 -->
+  <section class="view" id="view-troubleDetail">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('troubles')">‹</button>
+        <div><div class="header-title">トラブル対応</div><div class="header-sub" id="troubleSub">―</div></div>
+      </div>
+    </header>
+    <div class="trouble-status-bar" id="troubleStatusBar">
+      <span id="troubleStatus">対応中</span><span class="severity-badge" id="troubleSeverity">重大度：高</span>
+    </div>
+    <div class="trouble-summary">
+      <div class="trouble-meta"><span class="trouble-id" id="troubleIdDisplay">―</span><span>·</span><span id="troubleDate">―</span></div>
+      <div class="trouble-title" id="troubleTitle">―</div>
+      <div class="trouble-desc" id="troubleDesc">―</div>
+      <div class="trouble-parties" id="troubleParties"></div>
+    </div>
+    <div class="action-buttons">
+      <button class="action-button" onclick="logTroubleAction('店舗に連絡','店舗の大将に電話で状況確認')"><div class="action-button-icon">📞</div><div class="action-button-label">店舗に連絡</div><div class="action-button-sub">記録を追加</div></button>
+      <button class="action-button" onclick="logTroubleAction('代替クーポン発行','代替クーポンを発行し顧客へ送付')"><div class="action-button-icon">🎁</div><div class="action-button-label">代替クーポン</div><div class="action-button-sub">記録を追加</div></button>
+      <button class="action-button" onclick="logTroubleAction('顧客にお詫び','営業マン経由で顧客へお詫び連絡')"><div class="action-button-icon">✉</div><div class="action-button-label">顧客にお詫び</div><div class="action-button-sub">記録を追加</div></button>
+      <button class="action-button" onclick="pauseShopFromTrouble()"><div class="action-button-icon">⏸</div><div class="action-button-label">店舗一時停止</div><div class="action-button-sub">配信から除外</div></button>
+    </div>
+    <div class="timeline-card"><div class="timeline-title">対応履歴</div><div id="troubleTimeline"></div></div>
+    <div class="save-bar">
+      <div class="save-bar-row">
+        <button class="save-bar-btn-secondary" onclick="toast('メモを追加（本番実装）')">メモ追加</button>
+        <button class="save-bar-btn" onclick="resolveTrouble()">解決済みにする</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 画面4: 月次配信 -->
+  <section class="view" id="view-release">
+    <header class="admin-header">
+      <div class="header-row">
+        <button class="header-back" onclick="showView('dashboard')">‹</button>
+        <div><div class="header-title">月次アップデート配信</div><div class="header-sub" id="releaseSub">―</div></div>
+      </div>
+    </header>
+    <div class="release-hero">
+      <div class="release-version" id="releaseVersion">Monthly Release</div>
+      <div class="release-title" id="releaseTitle">―</div>
+      <div class="release-meta" id="releaseMeta">―</div>
+      <div class="release-counts">
+        <div class="release-count-cell"><div class="release-count-num" id="releaseAdd">+0</div><div class="release-count-label">新規加盟</div></div>
+        <div class="release-count-cell"><div class="release-count-num" id="releaseUpd">0</div><div class="release-count-label">変更</div></div>
+        <div class="release-count-cell"><div class="release-count-num" id="releaseRem">-0</div><div class="release-count-label">停止</div></div>
+      </div>
+    </div>
+    <div id="changelogSections"></div>
+    <div class="test-mode-card">
+      <div class="test-mode-icon">⚡</div>
+      <div><div class="test-mode-title">テスト配信を先に推奨</div><div class="test-mode-sub">自分の端末にだけ先行配信して動作確認できます。</div><button class="test-mode-btn" onclick="toast('自分の端末にテスト配信しました')">→ 自分にテスト配信</button></div>
+    </div>
+    <div class="save-bar">
+      <div class="save-bar-row">
+        <button class="save-bar-btn-secondary" onclick="toast('ドラフトを保存しました')">ドラフト保存</button>
+        <button class="save-bar-btn" onclick="confirmRelease()">本配信を予約</button>
+      </div>
+    </div>
+  </section>
+
+  <nav class="admin-nav" id="bottomNav">
+    <button class="nav-item active" data-view="dashboard" onclick="showView('dashboard')"><div class="nav-icon">⌂</div><div>ダッシュ</div></button>
+    <button class="nav-item" data-view="reviewList" onclick="showView('reviewList')"><div class="nav-icon">◐<span class="nav-badge" id="navBadgeReview">0</span></div><div>審査</div></button>
+    <button class="nav-item" data-view="shops" onclick="showView('shops')"><div class="nav-icon">⌗</div><div>加盟店</div></button>
+    <button class="nav-item" data-view="troubles" onclick="showView('troubles')"><div class="nav-icon">⚠<span class="nav-badge" id="navBadgeTrouble">0</span></div><div>トラブル</div></button>
+    <button class="nav-item" data-view="release" onclick="showView('release')"><div class="nav-icon">📡</div><div>配信</div></button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+</div>
+<script>
+const CHECKLIST = [
+  { key: 'google', label: '① Google口コミ 3.0以上', sub: 'API自動取得＋手動編集可' },
+  { key: 'license', label: '② 食品衛生営業許可証', sub: '画像アップロード必須' },
+  { key: 'years', label: '③ 開業12ヶ月以上', sub: '開業年月の確認' },
+  { key: 'instagram', label: '④ Instagram アカウント', sub: '拡散協力の観点から' },
+  { key: 'experience', label: '⑤ 推薦営業マンの来店経験', sub: '実際の食事経験あり' },
+  { key: 'no_ad', label: '⑥ 積極的広告宣伝でない', sub: 'グルメサイト上位課金等を除外' },
+  { key: 'entity', label: '⑦ 法人 / 個人事業主', sub: '登記簿・開業届アップロード' }
+];
+
+function dateOffset(days, hoursOffset, fixedTime) {
+  const d = new Date();
+  d.setDate(d.getDate() + (days || 0));
+  if (hoursOffset) d.setHours(d.getHours() + hoursOffset);
+  if (fixedTime) { const p = fixedTime.split(':'); d.setHours(+p[0], +p[1], 0, 0); }
+  return d.toISOString();
+}
+
+function buildMock() {
+  return {
+    reviews: [
+      { id: 'R-2026-005', shopName: '寿司 まる新', area: '名古屋市東区葵', thumb: 't3',
+        recommender: '田中 直樹', recommenderCompany: '保険A社', submitDate: dateOffset(-2), deadline: dateOffset(0, 6),
+        googleRating: 4.5, googleReviews: 87, yearsInBusiness: 6, instagram: '@maru_shin',
+        reason: 'カウンター中心の落ち着いた寿司店。50代以上のお客様におすすめできる本格派。3月に妻と訪問、大将の人柄も信頼できる。',
+        checks: { google: true, license: true, years: true, instagram: false, experience: true, no_ad: false, entity: false } },
+      { id: 'R-2026-006', shopName: '割烹 山ノ井', area: '名古屋市中区栄', thumb: 't1',
+        recommender: '佐々木 健太', recommenderCompany: '保険A社', submitDate: dateOffset(-1), deadline: dateOffset(1),
+        googleRating: 4.6, googleReviews: 128, yearsInBusiness: 7, instagram: '@yamanoi_kappou',
+        reason: '地元の日本酒30種揃える割烹。富裕層顧客の記念日利用に最適。女将の接客が素晴らしく、メッセージカード対応も柔軟。',
+        checks: { google: true, license: true, years: true, instagram: true, experience: true, no_ad: false, entity: false } },
+      { id: 'R-2026-007', shopName: 'カフェ Tsubaki', area: '名古屋市千種区', thumb: 't5',
+        recommender: '佐々木 健太', recommenderCompany: '保険A社', submitDate: dateOffset(0), deadline: dateOffset(3),
+        googleRating: 4.2, googleReviews: 56, yearsInBusiness: 3, instagram: '@cafe_tsubaki',
+        reason: 'ベビーカー入店歓迎の落ち着いたカフェ。授乳室あり、若いママ世代の顧客に最適。',
+        checks: { google: true, license: false, years: true, instagram: true, experience: false, no_ad: false, entity: false } }
+    ],
+    shops: [
+      { id: 'SH-001', name: '炭火と地酒 とおの', area: '千種区', status: 'paused', joinDate: '2026-04-01', thumb: 't2', pausedReason: 'TR-2026-005 対応中' },
+      { id: 'SH-002', name: '和食 ふじ家', area: '東区', status: 'active', joinDate: '2026-03-15', thumb: 't6' },
+      { id: 'SH-003', name: 'トラットリア ベルナ', area: '中区', status: 'active', joinDate: '2026-04-20', thumb: 't4' },
+      { id: 'SH-004', name: 'カフェ Tsubaki', area: '千種区', status: 'active', joinDate: '2026-05-10', thumb: 't5' }
+    ],
+    troubles: [
+      { id: 'TR-2026-005', occurredAt: dateOffset(-2, 0, '14:30'), title: 'クーポン拒否（重大クレーム）', severity: '高', status: 'pending',
+        description: '来店時にクーポンを提示したところ「そのクーポンは扱っていない」と店舗側に拒否され、顧客が憤慨。営業マンから連絡を受け、運営側で対応開始。',
+        shopId: 'SH-001', shopName: '炭火と地酒 とおの', customerId: 'C-0089', salesrep: '鈴木 直樹（保険A社）', couponCode: 'YN-2026-0524',
+        timeline: [
+          { time: dateOffset(-2, 0, '14:30'), type: 'urgent', text: '鈴木営業から通報。クーポン拒否、顧客憤慨。', actor: '受付：山田' },
+          { time: dateOffset(-2, 0, '15:10'), type: 'normal', text: '店舗（大将）に電話確認。スタッフ間連携不足を確認。', actor: '対応：山田' },
+          { time: dateOffset(-2, 0, '16:45'), type: 'normal', text: '代替クーポン（山ノ井 20%OFF）を顧客へ送付。', actor: '対応：山田' }
+        ] }
+    ]
+  };
+}
+
+let data = buildMock();
+const state = { currentReview: null, currentTrouble: null, reviewChecks: {} };
+
+function resetDemo() {
+  showModal({ title: 'デモを初期化しますか？', body: '審査・トラブル・加盟店の状態を最初に戻します。',
+    actions: [ { label: 'キャンセル', class: 'secondary' },
+      { label: '初期化する', class: 'primary', onclick: () => { data = buildMock(); showView('dashboard'); toast('初期化しました'); } } ] });
+}
+
+function showView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + viewName);
+  if (el) el.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-item[data-view="' + viewName + '"]');
+  if (navBtn) navBtn.classList.add('active');
+  document.getElementById('bottomNav').style.display = ['review', 'troubleDetail'].includes(viewName) ? 'none' : 'grid';
+  if (viewName === 'dashboard') renderDashboard();
+  if (viewName === 'reviewList') renderReviewList();
+  if (viewName === 'shops') renderShops();
+  if (viewName === 'troubles') renderTroubles();
+  if (viewName === 'release') renderRelease();
+  window.scrollTo(0, 0);
+}
+
+function hoursUntil(isoDate) {
+  return Math.floor((new Date(isoDate) - new Date()) / (1000 * 60 * 60));
+}
+function formatShortDate(iso) {
+  const d = new Date(iso);
+  return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+function renderDashboard() {
+  const now = new Date();
+  const wd = ['日','月','火','水','木','金','土'];
+  document.getElementById('adminDate').textContent = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日（${wd[now.getDay()]}）— 名古屋・岡崎`;
+  document.getElementById('kpiPending').innerHTML = `${data.reviews.length}<span class="kpi-unit">件</span>`;
+  const urgent = data.reviews.filter(r => hoursUntil(r.deadline) < 24).length;
+  document.getElementById('kpiPendingSub').textContent = urgent > 0 ? `うち${urgent}件が締切迫る` : '締切に余裕あり';
+  const active = data.shops.filter(s => s.status === 'active').length;
+  document.getElementById('kpiShops').innerHTML = `${data.shops.length}<span class="kpi-unit">店</span>`;
+  document.getElementById('kpiShopsSub').textContent = `うち稼働中 ${active}店`;
+  const pendingTroubles = data.troubles.filter(t => t.status === 'pending').length;
+  const rb = document.getElementById('navBadgeReview');
+  rb.textContent = data.reviews.length; rb.style.display = data.reviews.length > 0 ? 'flex' : 'none';
+  const tb = document.getElementById('navBadgeTrouble');
+  tb.textContent = pendingTroubles; tb.style.display = pendingTroubles > 0 ? 'flex' : 'none';
+  const ta = document.getElementById('dashboardTroubleArea');
+  if (pendingTroubles > 0) {
+    const t = data.troubles.find(x => x.status === 'pending');
+    ta.innerHTML = `<div class="trouble-alert"><div class="trouble-alert-icon">!</div><div class="trouble-alert-body"><div class="trouble-alert-title">クレーム対応 ${pendingTroubles}件</div><div class="trouble-alert-text">「${t.shopName}」で${t.title}。対応進行中。</div><button class="trouble-alert-btn" onclick="openTrouble('${t.id}')">詳細を確認</button></div></div>`;
+  } else { ta.innerHTML = ''; }
+  document.getElementById('dashReviewQueue').innerHTML = data.reviews.slice(0, 2).map(r => renderReviewItem(r)).join('');
+}
+
+function renderReviewItem(r) {
+  const hours = hoursUntil(r.deadline);
+  const isUrgent = hours < 24;
+  const dl = hours < 0 ? '締切超過' : hours < 24 ? `残 ${hours}時間` : `残 ${Math.floor(hours/24)}日`;
+  const cc = Object.values(r.checks).filter(Boolean).length;
+  const labels = { google: 'Google', license: '営業許可', years: '開業実績', instagram: 'IG' };
+  const pills = Object.entries(r.checks).slice(0, 4).map(([k, v]) => {
+    const cls = v ? 'background:var(--success-bg);color:var(--success);' : 'background:var(--bg);color:var(--ink-muted);';
+    return `<span style="font-size:10px;padding:3px 7px;border-radius:999px;font-weight:600;${cls}">${v ? '✓' : '○'} ${labels[k]}</span>`;
+  }).join(' ');
+  return `<button class="review-item ${isUrgent ? 'deadline-soon' : ''}" onclick="openReview('${r.id}')">
+    <div class="review-item-top"><div><div class="review-shop-name">${r.shopName}</div><div class="review-shop-meta">${r.area}</div></div><div class="review-deadline ${isUrgent ? 'urgent' : ''}">${dl}</div></div>
+    <div class="review-recommender"><div class="review-recommender-avatar">${r.recommender.charAt(0)}</div><div>推薦：<strong>${r.recommender}</strong>（${r.recommenderCompany}）</div></div>
+    <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">${pills}</div>
+    <div class="review-cta"><div class="review-progress"><strong>${cc} / 7</strong> 確認済</div><div class="review-btn">審査する</div></div>
+  </button>`;
+}
+
+function renderReviewList() {
+  document.getElementById('reviewListCount').textContent = `${data.reviews.length} 件`;
+  const body = document.getElementById('reviewListBody');
+  if (data.reviews.length === 0) {
+    body.innerHTML = `<div class="empty-state"><div class="empty-state-icon">✓</div><div>審査待ちの申請はありません</div></div>`;
+    return;
+  }
+  body.innerHTML = data.reviews.map(r => renderReviewItem(r)).join('');
+}
+
+function openReview(id) {
+  const r = data.reviews.find(x => x.id === id);
+  if (!r) return;
+  state.currentReview = r;
+  state.reviewChecks = Object.assign({}, r.checks);
+  document.getElementById('reviewSub').textContent = `申請日：${formatShortDate(r.submitDate)}`;
+  const hours = hoursUntil(r.deadline);
+  const isUrgent = hours < 24;
+  const banner = document.getElementById('reviewBanner');
+  banner.textContent = hours < 0 ? '⏱ 締切超過' : isUrgent ? `⏱ 残り ${hours}時間` : `⏱ 残り ${Math.floor(hours/24)}日`;
+  banner.classList.toggle('urgent', isUrgent);
+  document.getElementById('reviewPhotos').className = `shop-summary-photos ${r.thumb}`;
+  document.getElementById('reviewShopName').textContent = r.shopName;
+  document.getElementById('reviewShopMeta').innerHTML = `${r.area}<br>★ Google ${r.googleRating}（${r.googleReviews}件・自動取得） ／ ${r.yearsInBusiness}年営業`;
+  document.getElementById('reviewReason').textContent = r.reason;
+  document.getElementById('reviewMemo').value = '';
+  renderChecklist();
+  showView('review');
+}
+
+function renderChecklist() {
+  const r = state.currentReview;
+  const checks = state.reviewChecks;
+  document.getElementById('checklistBody').innerHTML = CHECKLIST.map(item => {
+    const checked = checks[item.key];
+    let evidence = '', actions = '';
+    if (item.key === 'google') {
+      evidence = `<div class="checklist-evidence">★ <strong>${r.googleRating}</strong>（${r.googleReviews}件） — API自動取得</div>`;
+      actions = `<div class="checklist-action"><button class="checklist-action-btn" onclick="event.stopPropagation();toast('Googleマップで開く')">Googleで開く ↗</button><button class="checklist-action-btn" onclick="event.stopPropagation();toast('手動修正モード')">手動編集</button></div>`;
+    } else if (item.key === 'license' && checked) {
+      evidence = `<div class="checklist-evidence">📄 <strong>許可証アップロード済</strong></div>`;
+      actions = `<div class="checklist-action"><button class="checklist-action-btn" onclick="event.stopPropagation();toast('画像を表示')">画像を確認</button></div>`;
+    } else if (item.key === 'years') {
+      evidence = `<div class="checklist-evidence">✓ <strong>${r.yearsInBusiness}年</strong>営業</div>`;
+    } else if (item.key === 'instagram') {
+      evidence = `<div class="checklist-evidence">${r.instagram}</div>`;
+      actions = `<div class="checklist-action"><button class="checklist-action-btn" onclick="event.stopPropagation();toast('Instagramで開く')">IGで開く ↗</button></div>`;
+    } else if (item.key === 'experience') {
+      evidence = `<div class="checklist-evidence">推薦：${r.recommender}</div>`;
+    } else if (item.key === 'no_ad') {
+      actions = `<div class="checklist-action"><button class="checklist-action-btn" onclick="event.stopPropagation();toast('食べログを確認')">食べログ</button><button class="checklist-action-btn" onclick="event.stopPropagation();toast('ぐるなびを確認')">ぐるなび</button></div>`;
+    } else if (item.key === 'entity') {
+      actions = `<div class="checklist-action"><button class="checklist-action-btn" onclick="event.stopPropagation();toast('法人を選択')">法人</button><button class="checklist-action-btn" onclick="event.stopPropagation();toast('個人事業主を選択')">個人事業主</button><button class="checklist-action-btn" onclick="event.stopPropagation();toast('書類アップロード')">書類</button></div>`;
+    }
+    return `<div class="checklist-item" onclick="toggleCheck('${item.key}')">
+      <div class="checklist-checkbox ${checked ? 'checked' : ''}">${checked ? '✓' : ''}</div>
+      <div class="checklist-content"><div class="checklist-label">${item.label}</div><div class="checklist-sub">${item.sub}</div>${evidence}${actions}</div>
+    </div>`;
+  }).join('');
+  const cc = Object.values(checks).filter(Boolean).length;
+  document.getElementById('checkProgress').textContent = cc;
+  document.getElementById('approveBtn').disabled = cc < 7;
+}
+
+function toggleCheck(key) {
+  state.reviewChecks[key] = !state.reviewChecks[key];
+  renderChecklist();
+}
+
+function approveReview() {
+  const r = state.currentReview;
+  showModal({ title: '承認して加盟登録しますか？', body: `「${r.shopName}」を加盟店に登録します。翌月のアップデートで営業マンのクーポン一覧に追加されます。`,
+    actions: [ { label: 'キャンセル', class: 'secondary' },
+      { label: '承認する', class: 'success', onclick: () => {
+        data.shops.push({ id: 'SH-' + String(data.shops.length + 1).padStart(3, '0'), name: r.shopName, area: r.area.replace('名古屋市', '').replace(/[0-9].*/, ''), status: 'active', joinDate: formatShortDate(new Date().toISOString()), thumb: r.thumb });
+        data.reviews = data.reviews.filter(x => x.id !== r.id);
+        toast(`✓ ${r.shopName} を承認しました`);
+        setTimeout(() => showView('dashboard'), 600);
+      } } ] });
+}
+
+function rejectReview() {
+  const r = state.currentReview;
+  showModal({ title: '差し戻しますか？', body: `「${r.shopName}」の申請を推薦営業マンに差し戻します。アプリ内通知で理由が伝わります。`,
+    actions: [ { label: 'キャンセル', class: 'secondary' },
+      { label: '差し戻す', class: 'danger', onclick: () => {
+        data.reviews = data.reviews.filter(x => x.id !== r.id);
+        toast('差し戻しました');
+        setTimeout(() => showView('dashboard'), 600);
+      } } ] });
+}
+
+function renderShops() {
+  document.getElementById('shopsCount').textContent = `${data.shops.length} 店`;
+  document.getElementById('shopsList').innerHTML = data.shops.map(s => `
+    <button class="shop-list-item" onclick="toast('${s.name} の詳細（本番では編集画面へ）')">
+      <div class="shop-list-thumb ${s.thumb}"></div>
+      <div class="shop-list-body"><div class="shop-list-name">${s.name}</div><div class="shop-list-sub">${s.area} ・ ${s.joinDate}登録${s.pausedReason ? ' ・ ' + s.pausedReason : ''}</div></div>
+      <div class="shop-list-status ${s.status === 'paused' ? 'paused' : ''}">${s.status === 'paused' ? '一時停止' : '公開中'}</div>
+    </button>`).join('');
+}
+
+function renderTroubles() {
+  const list = data.troubles;
+  document.getElementById('troublesCount').textContent = `${list.filter(t => t.status === 'pending').length} 件 対応中`;
+  if (list.length === 0) {
+    document.getElementById('troublesList').innerHTML = `<div class="empty-state"><div class="empty-state-icon">✓</div><div>未対応のトラブルはありません</div></div>`;
+    return;
+  }
+  document.getElementById('troublesList').innerHTML = list.map(t => {
+    const resolved = t.status === 'resolved';
+    return `<button class="shop-list-item" onclick="openTrouble('${t.id}')">
+      <div class="shop-list-thumb" style="background:${resolved ? 'var(--success)' : 'var(--urgent)'};display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">${resolved ? '✓' : '!'}</div>
+      <div class="shop-list-body"><div class="shop-list-name">${t.title}</div><div class="shop-list-sub">${t.shopName} ・ ${t.id}</div></div>
+      <div class="shop-list-status ${resolved ? '' : 'paused'}">${resolved ? '解決済' : '対応中'}</div>
+    </button>`;
+  }).join('');
+}
+
+function openTrouble(id) {
+  const t = data.troubles.find(x => x.id === id);
+  if (!t) return;
+  state.currentTrouble = t;
+  const d = new Date(t.occurredAt);
+  document.getElementById('troubleSub').textContent = `${t.id} ／ ${Math.abs(hoursUntil(t.occurredAt) / 24).toFixed(0)}日前発生`;
+  const bar = document.getElementById('troubleStatusBar');
+  bar.classList.toggle('resolved', t.status === 'resolved');
+  document.getElementById('troubleStatus').textContent = t.status === 'resolved' ? '解決済み' : '対応中';
+  document.getElementById('troubleSeverity').textContent = `重大度：${t.severity}`;
+  document.getElementById('troubleIdDisplay').textContent = t.id;
+  document.getElementById('troubleDate').textContent = `${d.getFullYear()}/${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('troubleTitle').textContent = t.title;
+  document.getElementById('troubleDesc').textContent = t.description;
+  document.getElementById('troubleParties').innerHTML = `
+    <div class="trouble-party-row"><div class="trouble-party-label">対象店舗</div><div class="trouble-party-value">${t.shopName}</div></div>
+    <div class="trouble-party-row"><div class="trouble-party-label">顧客</div><div class="trouble-party-value">${t.customerId}（端末内）</div></div>
+    <div class="trouble-party-row"><div class="trouble-party-label">推薦営業</div><div class="trouble-party-value">${t.salesrep}</div></div>
+    <div class="trouble-party-row"><div class="trouble-party-label">クーポン</div><div class="trouble-party-value">${t.couponCode}</div></div>`;
+  renderTimeline();
+  showView('troubleDetail');
+}
+
+function renderTimeline() {
+  const t = state.currentTrouble;
+  document.getElementById('troubleTimeline').innerHTML = t.timeline.map((item, i) => {
+    const d = new Date(item.time);
+    const dot = item.type === 'urgent' ? 'urgent' : item.type === 'success' ? 'success' : '';
+    const label = item.type === 'urgent' ? '!' : item.type === 'success' ? '✓' : (i + 1);
+    return `<div class="timeline-item"><div class="timeline-dot ${dot}">${label}</div><div class="timeline-content"><div class="timeline-time">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}</div><div class="timeline-text">${item.text}</div><div class="timeline-actor">${item.actor}</div></div></div>`;
+  }).join('');
+}
+
+function logTroubleAction(action, text) {
+  const t = state.currentTrouble;
+  t.timeline.push({ time: new Date().toISOString(), type: 'normal', text: text, actor: '対応：山田' });
+  renderTimeline();
+  toast(`記録：${action}`);
+}
+
+function pauseShopFromTrouble() {
+  const t = state.currentTrouble;
+  const shop = data.shops.find(s => s.id === t.shopId);
+  showModal({ title: '店舗を一時停止しますか？', body: `「${t.shopName}」を配信から除外します。翌月アップデートで一覧から消えます。`,
+    actions: [ { label: 'キャンセル', class: 'secondary' },
+      { label: '一時停止', class: 'danger', onclick: () => {
+        if (shop) { shop.status = 'paused'; shop.pausedReason = t.id + ' 対応中'; }
+        t.timeline.push({ time: new Date().toISOString(), type: 'normal', text: '店舗を一時停止（配信から除外）', actor: '対応：山田' });
+        renderTimeline();
+        toast('店舗を一時停止しました');
+      } } ] });
+}
+
+function resolveTrouble() {
+  const t = state.currentTrouble;
+  showModal({ title: '解決済みにしますか？', body: 'このトラブル案件を解決済みとして記録します。推薦営業マンの推薦権をどうするか選んでください。',
+    actions: [ { label: '推薦権は維持', class: 'secondary', onclick: () => doResolve(false) },
+      { label: '推薦権を停止', class: 'danger', onclick: () => doResolve(true) } ] });
+}
+
+function doResolve(suspend) {
+  const t = state.currentTrouble;
+  t.status = 'resolved';
+  t.timeline.push({ time: new Date().toISOString(), type: 'success', text: suspend ? '解決済み。推薦営業マンの推薦権を停止（A-05）。' : '解決済み。今回は推薦権を維持（初回のため警告のみ）。', actor: '判定：山田' });
+  toast(suspend ? '解決＋推薦権停止' : '解決済みにしました');
+  setTimeout(() => showView('dashboard'), 800);
+}
+
+function renderRelease() {
+  const now = new Date();
+  const nextMonth = now.getMonth() + 2 > 12 ? 1 : now.getMonth() + 2;
+  document.getElementById('releaseSub').textContent = `${now.getFullYear()}年${nextMonth}月号 ／ ドラフト`;
+  document.getElementById('releaseVersion').textContent = `Monthly Release · ${now.getFullYear()}.${String(nextMonth).padStart(2, '0')}`;
+  document.getElementById('releaseTitle').textContent = `${now.getFullYear()}年${nextMonth}月号 配信準備`;
+  document.getElementById('releaseMeta').textContent = `配信予定：${now.getFullYear()}/${nextMonth}/1 00:00 ／ 自動配信`;
+  const added = data.shops.filter(s => s.joinDate && new Date(s.joinDate).getMonth() === now.getMonth()).length || 3;
+  const paused = data.shops.filter(s => s.status === 'paused').length;
+  document.getElementById('releaseAdd').textContent = `+${added}`;
+  document.getElementById('releaseUpd').textContent = '8';
+  document.getElementById('releaseRem').textContent = `-${paused}`;
+  const activeShops = data.shops.filter(s => s.status === 'active');
+  const pausedShops = data.shops.filter(s => s.status === 'paused');
+  document.getElementById('changelogSections').innerHTML = `
+    <div class="changelog-section">
+      <div class="changelog-header"><div class="changelog-header-left"><div class="changelog-icon added">+</div><div class="changelog-title">新規加盟</div><div class="changelog-count">${added}</div></div><div style="color:var(--ink-muted);">▾</div></div>
+      <div class="changelog-item"><div class="changelog-item-name">寿司 まる新</div><div class="changelog-item-sub">名古屋市東区 ／ 承認済</div></div>
+      <div class="changelog-item"><div class="changelog-item-name">炭火 とおの 岡崎店</div><div class="changelog-item-sub">岡崎市 ／ 承認済</div></div>
+      <div class="changelog-item"><div class="changelog-item-name">カフェ Tsubaki</div><div class="changelog-item-sub">名古屋市千種区 ／ 承認済</div></div>
+    </div>
+    <div class="changelog-section">
+      <div class="changelog-header"><div class="changelog-header-left"><div class="changelog-icon updated">✎</div><div class="changelog-title">クーポン・情報更新</div><div class="changelog-count">8</div></div><div style="color:var(--ink-muted);">▾</div></div>
+      <div class="changelog-item"><div class="changelog-item-name">割烹 山ノ井</div><div class="changelog-item-sub">新クーポン「夏季限定 鱧コース10%OFF」追加</div></div>
+      <div class="changelog-item"><div class="changelog-item-name">トラットリア ベルナ</div><div class="changelog-item-sub">タグ追加「テラス席」「ペット可」</div></div>
+    </div>
+    ${pausedShops.length > 0 ? `<div class="changelog-section">
+      <div class="changelog-header"><div class="changelog-header-left"><div class="changelog-icon removed">−</div><div class="changelog-title">配信停止</div><div class="changelog-count">${pausedShops.length}</div></div><div style="color:var(--ink-muted);">▾</div></div>
+      ${pausedShops.map(s => `<div class="changelog-item"><div class="changelog-item-name">${s.name}</div><div class="changelog-item-sub">${s.pausedReason || '一時停止'}</div></div>`).join('')}
+    </div>` : ''}`;
+}
+
+function confirmRelease() {
+  showModal({ title: '本配信を予約しますか？', body: '毎月1日 00:00 に全営業マンへ自動配信されます。先にテスト配信での動作確認を推奨します。',
+    actions: [ { label: 'キャンセル', class: 'secondary' },
+      { label: '本配信を予約', class: 'primary', onclick: () => { toast('✓ 本配信を予約しました'); setTimeout(() => showView('dashboard'), 600); } } ] });
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function showModal(opt) {
+  document.getElementById('modalTitle').textContent = opt.title;
+  document.getElementById('modalBody').textContent = opt.body;
+  const acts = document.getElementById('modalActions');
+  acts.innerHTML = '';
+  opt.actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'modal-btn ' + (a.class || 'secondary');
+    btn.textContent = a.label;
+    btn.onclick = () => { closeModal(); if (a.onclick) a.onclick(); };
+    acts.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('click', e => { if (e.target.id === 'modal') closeModal(); });
+
+renderDashboard();
+</script>
+</body>
+</html>

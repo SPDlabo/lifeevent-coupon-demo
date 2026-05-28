@@ -1,0 +1,2714 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1e3a5f">
+<title>ライフイベント営業支援 — 営業マン用</title>
+<style>
+  :root {
+    --bg: #f5f3ee;
+    --surface: #ffffff;
+    --ink: #1a1f2e;
+    --ink-soft: #4a5468;
+    --ink-muted: #8b94a8;
+    --border: #e5e1d8;
+    --border-input: #d8d3c5;
+    --accent: #1e3a5f;
+    --accent-soft: #2c5282;
+    --urgent: #c84a3a;
+    --urgent-bg: #fdf2f0;
+    --warm: #d97a4a;
+    --warm-bg: #fdf4ec;
+    --success: #5a7a4f;
+    --success-bg: #f0f4ea;
+    --gold: #b8860b;
+    --gold-bg: #faf3e0;
+    --gold-deep: #8b6914;
+    --paper: #faf5ec;
+    --presentation-bg: #2a1f1a;
+    --shadow: 0 1px 2px rgba(26, 31, 46, 0.04), 0 2px 8px rgba(26, 31, 46, 0.06);
+    --shadow-lg: 0 4px 12px rgba(26, 31, 46, 0.08), 0 8px 24px rgba(26, 31, 46, 0.06);
+    --shadow-card: 0 10px 40px rgba(0, 0, 0, 0.25), 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    font-family: 'Hiragino Kaku Gothic ProN', 'Yu Gothic', 'Noto Sans JP', sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+  button { cursor: pointer; font-family: inherit; }
+  input, textarea, select { font-family: inherit; }
+
+  .app {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    position: relative;
+    background: var(--bg);
+  }
+  .view { display: none; min-height: 100vh; padding-bottom: 90px; }
+  .view.active { display: block; }
+  .view.presentation { background: var(--presentation-bg); }
+
+  .demo-badge {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    right: 8px;
+    z-index: 100;
+    background: var(--gold);
+    color: #fff;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.05em;
+  }
+  .demo-reset {
+    position: fixed;
+    top: env(safe-area-inset-top);
+    left: 8px;
+    z-index: 100;
+    background: rgba(0,0,0,0.5);
+    color: #fff;
+    border: none;
+    font-size: 9px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+  }
+
+  /* ===== ヘッダー ===== */
+  .app-header {
+    background: var(--accent);
+    color: #fff;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .app-header-row { display: flex; align-items: center; gap: 12px; }
+  .app-header-back {
+    width: 36px; height: 36px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    border: none;
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .app-header-title { font-size: 17px; font-weight: 600; flex: 1; }
+  .app-header-sub { font-size: 11px; opacity: 0.7; margin-top: 2px; }
+  .app-header-icon {
+    width: 36px; height: 36px;
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    border: none;
+    color: #fff;
+  }
+  .header-date { font-size: 13px; opacity: 0.75; }
+  .header-greeting { font-size: 22px; font-weight: 600; line-height: 1.3; margin-top: 12px; }
+  .header-summary { margin-top: 6px; font-size: 14px; opacity: 0.85; }
+  .header-summary strong { color: #ffd9a8; font-weight: 600; }
+
+  .customer-context {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .context-avatar {
+    width: 36px; height: 36px;
+    background: #ffd9a8;
+    color: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .context-info { flex: 1; min-width: 0; }
+  .context-name { font-size: 13px; font-weight: 600; }
+  .context-event { font-size: 11px; color: #ffd9a8; margin-top: 2px; }
+
+  /* ===== ボトムナビ ===== */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .nav-item {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 3px;
+    padding: 6px 4px;
+    color: var(--ink-muted);
+    font-size: 10px; font-weight: 600;
+    background: none; border: none;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-icon { font-size: 20px; line-height: 1; }
+
+  .section { padding: 16px 16px 0; }
+  .section-head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 10px;
+    padding: 0 4px;
+  }
+  .section-title { font-size: 14px; font-weight: 700; color: var(--ink); }
+  .section-count { font-size: 12px; color: var(--ink-muted); font-weight: 500; }
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--ink-muted);
+    font-size: 13px;
+  }
+  .empty-state-icon { font-size: 36px; opacity: 0.3; margin-bottom: 8px; }
+
+  /* ===== 画面1: ホーム ===== */
+  .quick-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 16px 16px 0;
+  }
+  .quick-btn {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    box-shadow: var(--shadow);
+    text-align: left;
+    width: 100%;
+  }
+  .quick-btn-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; flex-shrink: 0; font-weight: 700;
+  }
+  .quick-btn-icon.add { background: var(--success-bg); color: var(--success); }
+  .quick-btn-icon.list { background: var(--warm-bg); color: var(--warm); }
+  .quick-btn-label { font-size: 13px; font-weight: 600; color: var(--ink); }
+
+  .event-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px;
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    border-left: 4px solid var(--border);
+    width: 100%;
+    text-align: left;
+    display: block;
+    border-top: none; border-right: none; border-bottom: none;
+  }
+  .event-card.urgent { border-left-color: var(--urgent); }
+  .event-card.warm { border-left-color: var(--warm); }
+  .event-card.upcoming { border-left-color: var(--accent-soft); }
+  .card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+  }
+  .card-customer { font-size: 17px; font-weight: 600; color: var(--ink); }
+  .card-customer-id { font-size: 11px; color: var(--ink-muted); margin-top: 2px; }
+  .card-badge {
+    font-size: 11px; font-weight: 700;
+    padding: 4px 9px;
+    border-radius: 6px;
+  }
+  .card-badge.urgent { background: var(--urgent-bg); color: var(--urgent); }
+  .card-badge.warm { background: var(--warm-bg); color: var(--warm); }
+  .card-badge.upcoming { background: #eef2f7; color: var(--accent-soft); }
+  .card-event {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background: #faf8f3;
+    border-radius: 8px;
+    margin-bottom: 10px;
+  }
+  .card-event-icon { font-size: 18px; }
+  .card-event-text { flex: 1; font-size: 13px; color: var(--ink-soft); font-weight: 500; }
+  .card-event-text strong { color: var(--ink); font-weight: 700; }
+  .card-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .card-meta { font-size: 11px; color: var(--ink-muted); }
+  .card-meta.done { color: var(--success); font-weight: 600; }
+  .card-cta {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px; font-weight: 600;
+  }
+  .card-cta.done {
+    background: #e5e1d8;
+    color: var(--ink-muted);
+  }
+
+  /* ===== 画面2: 顧客登録 ===== */
+  .progress-bar {
+    background: var(--surface);
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .progress-track {
+    flex: 1; height: 6px;
+    background: var(--border);
+    border-radius: 999px; overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 999px;
+    transition: width 0.3s;
+  }
+  .progress-text { font-size: 11px; color: var(--ink-soft); font-weight: 600; white-space: nowrap; }
+  .duplicate-alert {
+    margin: 14px 16px 0;
+    background: var(--urgent-bg);
+    border: 1px solid #f0c8c0;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: none;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .duplicate-alert.show { display: flex; }
+  .duplicate-alert-icon {
+    width: 24px; height: 24px;
+    background: var(--urgent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700; flex-shrink: 0;
+  }
+  .duplicate-alert-body { flex: 1; font-size: 12px; color: var(--urgent); line-height: 1.5; }
+  .duplicate-alert-body strong { font-weight: 700; display: block; margin-bottom: 2px; font-size: 13px; }
+  .duplicate-alert-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .duplicate-alert-btn {
+    background: var(--surface);
+    border: 1px solid #f0c8c0;
+    color: var(--urgent);
+    font-size: 11px; font-weight: 600;
+    padding: 6px 10px;
+    border-radius: 6px;
+  }
+  .duplicate-alert-btn.primary { background: var(--urgent); color: #fff; }
+
+  .form-section { padding: 18px 16px 0; }
+  .form-section-title {
+    font-size: 12px; font-weight: 700;
+    color: var(--ink-muted);
+    letter-spacing: 0.08em;
+    padding: 0 4px 10px;
+    text-transform: uppercase;
+  }
+  .form-card {
+    background: var(--surface);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .field {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+  .field:last-child { border-bottom: none; }
+  .field-label {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 12px; color: var(--ink-soft);
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .field-required {
+    color: var(--urgent);
+    font-size: 10px; font-weight: 700;
+    background: var(--urgent-bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .field-optional {
+    color: var(--ink-muted);
+    font-size: 10px; font-weight: 500;
+    background: var(--bg);
+    padding: 2px 6px;
+    border-radius: 4px;
+  }
+  .field-input {
+    width: 100%;
+    border: none; background: transparent;
+    font-size: 17px; color: var(--ink);
+    font-weight: 500;
+    padding: 4px 0; outline: none;
+  }
+  .field-input::placeholder { color: var(--ink-muted); font-weight: 400; }
+  .field-input.small { font-size: 14px; }
+  .field-textarea {
+    width: 100%;
+    border: none; background: transparent;
+    font-size: 14px; color: var(--ink);
+    padding: 4px 0; outline: none;
+    resize: none; min-height: 60px;
+  }
+  .field-name-split { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field-name-sub-label { font-size: 10px; color: var(--ink-muted); margin-bottom: 4px; }
+  .field-furigana {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--border);
+  }
+  .field-select-wrap { position: relative; }
+  .field-select {
+    width: 100%;
+    border: none; background: transparent;
+    font-size: 17px; color: var(--ink);
+    padding: 4px 24px 4px 0; outline: none;
+    appearance: none;
+  }
+  .field-select-arrow {
+    position: absolute; right: 0;
+    top: 50%; transform: translateY(-50%);
+    color: var(--ink-muted);
+    pointer-events: none; font-size: 12px;
+  }
+  .id-toggle { display: flex; gap: 6px; margin-bottom: 8px; }
+  .id-toggle-btn {
+    flex: 1;
+    padding: 8px 12px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-soft);
+  }
+  .id-toggle-btn.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .id-auto-display {
+    font-size: 17px;
+    color: var(--ink);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    font-family: 'SF Mono', 'Menlo', monospace;
+  }
+  .field-hint {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 6px;
+    line-height: 1.5;
+  }
+
+  .events-section { padding: 18px 16px 0; }
+  .events-card {
+    background: var(--surface);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: var(--shadow);
+  }
+  .event-chip-add {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent);
+    color: #fff;
+    border: 1px dashed rgba(255,255,255,0.3);
+    border-radius: 999px;
+    padding: 8px 14px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* ===== コミットバー ===== */
+  .commit-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 -2px 12px rgba(26, 31, 46, 0.06);
+  }
+  .commit-row { display: flex; align-items: center; gap: 10px; }
+  .commit-info { flex: 1; }
+  .commit-info-title { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+  .commit-info-sub { font-size: 10px; color: var(--ink-muted); margin-top: 1px; }
+  .commit-btn-secondary {
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--border-input);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 12px; font-weight: 600;
+  }
+  .commit-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+  }
+  .commit-btn:disabled {
+    background: var(--border);
+    color: var(--ink-muted);
+  }
+
+  /* ===== 画面3: クーポン一覧 ===== */
+  .search-bar { padding: 12px 16px 0; }
+  .search-input-wrap { position: relative; }
+  .search-input {
+    width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px 10px 38px;
+    font-size: 14px;
+    outline: none;
+  }
+  .search-icon {
+    position: absolute; left: 12px;
+    top: 50%; transform: translateY(-50%);
+    color: var(--ink-muted); font-size: 14px;
+  }
+  .filter-row {
+    display: flex; gap: 6px;
+    padding: 12px 16px 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-row::-webkit-scrollbar { display: none; }
+  .filter-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    padding: 7px 12px;
+    border-radius: 999px;
+    font-size: 12px; font-weight: 600;
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .filter-chip.active {
+    background: var(--ink);
+    color: #fff;
+    border-color: var(--ink);
+  }
+  .results-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px 8px;
+  }
+  .results-count { font-size: 12px; color: var(--ink-soft); font-weight: 600; }
+  .results-count strong { color: var(--ink); font-weight: 700; }
+  .coupon-list { padding: 0 16px 100px; }
+  .coupon-card {
+    background: var(--surface);
+    border-radius: 14px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    position: relative;
+    border: 2px solid transparent;
+    width: 100%;
+    text-align: left;
+    display: block;
+  }
+  .coupon-card.selected {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.12), var(--shadow-lg);
+  }
+  .coupon-check {
+    position: absolute;
+    top: 10px; right: 10px;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid var(--border-input);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px;
+    color: transparent;
+    font-weight: 700;
+    z-index: 3;
+  }
+  .coupon-card.selected .coupon-check {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .coupon-recommended {
+    position: absolute;
+    top: 10px; left: 10px;
+    background: var(--gold-bg);
+    color: var(--gold);
+    font-size: 10px; font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 6px;
+    z-index: 3;
+  }
+  .coupon-photo {
+    height: 140px;
+    position: relative;
+    padding: 12px;
+    display: flex; align-items: flex-end;
+  }
+  .coupon-photo.shop1 { background: linear-gradient(135deg, #8b6f47 0%, #5c4a30 100%); }
+  .coupon-photo.shop2 { background: linear-gradient(135deg, #4a6b4a 0%, #2f4a2f 100%); }
+  .coupon-photo.shop3 { background: linear-gradient(135deg, #b85c5c 0%, #8b3a3a 100%); }
+  .coupon-photo.shop4 { background: linear-gradient(135deg, #6b4a8b 0%, #3a2f5c 100%); }
+  .coupon-photo.shop5 { background: linear-gradient(135deg, #8b8b4a 0%, #5c5c2f 100%); }
+  .coupon-photo.shop6 { background: linear-gradient(135deg, #4a8b8b 0%, #2f5c5c 100%); }
+  .photo-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(0,0,0,0.55) 0%, transparent 50%);
+  }
+  .photo-discount {
+    position: relative; z-index: 1;
+    color: #fff;
+    font-size: 22px; font-weight: 700;
+    text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  }
+  .photo-discount-sub {
+    font-size: 11px; font-weight: 500;
+    opacity: 0.9; display: block;
+    margin-top: 2px;
+  }
+  .coupon-body { padding: 14px; }
+  .coupon-shop-row {
+    display: flex; justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+  }
+  .coupon-shop-name { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .coupon-shop-meta {
+    display: flex; align-items: center; gap: 4px;
+    font-size: 11px; color: var(--ink-soft);
+    margin-top: 3px;
+  }
+  .coupon-rating {
+    background: var(--gold-bg);
+    color: var(--gold);
+    padding: 3px 7px;
+    border-radius: 6px;
+    font-size: 11px; font-weight: 700;
+  }
+  .coupon-tags {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    margin-bottom: 10px;
+  }
+  .coupon-tag {
+    font-size: 10px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-weight: 600;
+    background: var(--bg);
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+  }
+  .coupon-tag.match {
+    background: var(--success-bg);
+    color: var(--success);
+    border-color: #c5d9b9;
+  }
+  .coupon-recommend-text {
+    font-size: 12px;
+    color: var(--ink-soft);
+    line-height: 1.5;
+    padding: 10px;
+    background: var(--bg);
+    border-radius: 8px;
+    border-left: 3px solid var(--warm);
+  }
+  .coupon-recommend-label {
+    font-size: 10px; font-weight: 700;
+    color: var(--warm);
+    margin-bottom: 4px;
+  }
+  .coupon-footer {
+    display: flex; justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    background: #faf8f3;
+    border-top: 1px solid var(--border);
+  }
+  .coupon-expiry { font-size: 11px; color: var(--ink-muted); }
+  .coupon-area { font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+  .selection-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+    box-shadow: 0 -2px 12px rgba(26, 31, 46, 0.08);
+  }
+  .selection-row { display: flex; align-items: center; gap: 12px; }
+  .selection-count { flex: 1; }
+  .selection-count-num { font-size: 18px; font-weight: 700; color: var(--ink); }
+  .selection-count-label { font-size: 11px; color: var(--ink-muted); margin-top: 1px; }
+  .selection-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 13px 22px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+  }
+  .selection-btn:disabled {
+    background: var(--border);
+    color: var(--ink-muted);
+  }
+
+  /* ===== 画面4: メッセージ ===== */
+  .step-indicator {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .step-item { display: flex; align-items: center; gap: 6px; flex: 1; }
+  .step-num {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--success);
+    color: #fff;
+    font-size: 11px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .step-num.active { background: var(--accent); }
+  .step-num.pending { background: var(--border); color: var(--ink-muted); }
+  .step-label { font-size: 11px; color: var(--ink-soft); font-weight: 600; }
+  .step-label.active { color: var(--ink); font-weight: 700; }
+  .step-divider { flex: 0 0 16px; height: 1px; background: var(--border); }
+
+  .message-paper {
+    background: var(--paper);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 18px 20px;
+    margin: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  .message-paper-label {
+    font-size: 10px;
+    color: var(--gold-deep);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+  }
+  .message-paper-occasion {
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    font-family: 'Hiragino Mincho ProN', serif;
+  }
+  .message-textarea {
+    width: 100%;
+    background: transparent;
+    border: none; outline: none;
+    resize: none;
+    font-family: 'Hiragino Mincho ProN', serif;
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink);
+    min-height: 140px;
+  }
+  .message-textarea::placeholder {
+    color: var(--ink-muted);
+    font-style: italic;
+  }
+  .message-signature {
+    margin-top: 12px;
+    padding-top: 10px;
+    border-top: 1px dashed #d4c8a8;
+    text-align: right;
+    font-family: 'Hiragino Mincho ProN', serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+  .char-counter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 8px 16px 0;
+  }
+  .char-count { font-size: 11px; color: var(--ink-muted); font-weight: 600; }
+  .char-count.warning { color: var(--warm); }
+  .char-count.ok { color: var(--success); }
+  .char-bar {
+    flex: 1; height: 3px;
+    background: var(--border);
+    border-radius: 999px;
+    margin: 0 12px;
+    overflow: hidden;
+  }
+  .char-bar-fill {
+    height: 100%;
+    background: var(--success);
+    border-radius: 999px;
+    transition: width 0.2s;
+  }
+  .save-status {
+    font-size: 10px;
+    opacity: 0.6;
+    margin-top: 4px;
+  }
+  .save-status.saving { color: #ffd9a8; opacity: 0.9; }
+  .save-status.saved { color: var(--success); opacity: 1; }
+
+  /* ===== 画面5: 提示 ===== */
+  .presentation-bg {
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(circle at 20% 10%, rgba(212, 165, 116, 0.15) 0%, transparent 40%),
+      radial-gradient(circle at 80% 60%, rgba(184, 134, 11, 0.12) 0%, transparent 45%),
+      linear-gradient(180deg, #2a1f1a 0%, #3a2d24 100%);
+    z-index: 0;
+    max-width: 480px;
+    margin: 0 auto;
+    pointer-events: none;
+  }
+  .presentation-header {
+    position: relative;
+    padding: calc(14px + env(safe-area-inset-top)) 16px 14px;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .presentation-back {
+    width: 36px; height: 36px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    color: #fff;
+  }
+  .presentation-title { color: #fff; font-size: 13px; font-weight: 600; text-align: center; }
+  .presentation-subtitle { color: #d4a574; font-size: 10px; margin-top: 2px; letter-spacing: 0.05em; }
+  .mode-toggle {
+    position: relative;
+    z-index: 10;
+    margin: 0 16px 16px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 4px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+  }
+  .mode-btn {
+    padding: 9px 12px;
+    text-align: center;
+    font-size: 12px; font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+    border-radius: 7px;
+    background: transparent;
+    border: none;
+  }
+  .mode-btn.active {
+    background: var(--gold-bg);
+    color: var(--gold-deep);
+  }
+  .card-stack {
+    position: relative;
+    z-index: 5;
+    padding: 0 16px 140px;
+  }
+  .stack-meta {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 11px;
+    margin-bottom: 14px;
+  }
+  .stack-meta-current { color: var(--gold-bg); font-weight: 700; }
+  .gift-card {
+    background: var(--paper);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    position: relative;
+    margin-bottom: 14px;
+    font-family: 'Hiragino Mincho ProN', 'Yu Mincho', serif;
+  }
+  .gift-card-header {
+    background: linear-gradient(135deg, #2a1f1a 0%, #4a3520 100%);
+    color: #f5e6c8;
+    padding: 18px 20px 20px;
+  }
+  .gift-card-occasion {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    color: #d4a574;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-weight: 700;
+  }
+  .gift-card-recipient { font-size: 24px; font-weight: 600; line-height: 1.3; margin-bottom: 4px; }
+  .gift-card-greeting {
+    font-size: 13px;
+    color: #d4a574;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    font-weight: 500;
+  }
+  .gift-card-message {
+    background: var(--paper);
+    padding: 16px 20px;
+    border-bottom: 1px dashed #d4c8a8;
+    position: relative;
+  }
+  .gift-card-message-quote {
+    position: absolute;
+    top: 8px; left: 12px;
+    font-size: 36px;
+    color: #d4c8a8;
+    line-height: 1;
+  }
+  .gift-card-message-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #3a2d24;
+    padding: 4px 0 4px 20px;
+    white-space: pre-wrap;
+  }
+  .gift-card-message-author {
+    text-align: right;
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 8px;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+  .gift-card-shop { padding: 18px 20px 16px; }
+  .gift-card-shop-label {
+    font-size: 10px;
+    color: var(--gold-deep);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+  .gift-card-shop-name { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .gift-card-shop-meta {
+    font-size: 11px;
+    color: var(--ink-soft);
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+    line-height: 1.5;
+  }
+  .gift-card-discount {
+    margin: 0 20px 16px;
+    background: linear-gradient(135deg, var(--gold-bg) 0%, #f5e6c8 100%);
+    border: 1px solid #e0c896;
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .gift-card-discount-label {
+    font-size: 10px;
+    color: var(--gold-deep);
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+  .gift-card-discount-value { font-size: 22px; font-weight: 700; color: var(--gold-deep); }
+  .gift-card-discount-sub {
+    font-size: 11px;
+    color: var(--ink-soft);
+    margin-top: 2px;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+  .gift-card-footer {
+    background: #faf5ec;
+    border-top: 1px solid var(--border);
+    padding: 14px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: 'Hiragino Kaku Gothic ProN', sans-serif;
+  }
+  .gift-card-code { font-size: 11px; color: var(--ink-muted); }
+  .gift-card-code-num {
+    font-family: 'SF Mono', monospace;
+    color: var(--ink);
+    font-weight: 700;
+    font-size: 13px;
+    letter-spacing: 0.1em;
+    margin-top: 2px;
+  }
+  .gift-card-expiry-label { font-size: 10px; color: var(--ink-muted); }
+  .gift-card-expiry-date {
+    font-size: 13px;
+    color: var(--ink);
+    font-weight: 700;
+    margin-top: 2px;
+    text-align: right;
+  }
+  .pagination {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin: 4px 0 12px;
+    position: relative;
+    z-index: 5;
+  }
+  .pagination-dot {
+    width: 8px; height: 8px;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+  }
+  .pagination-dot.active {
+    background: var(--gold-bg);
+    width: 24px;
+    border-radius: 999px;
+  }
+  .action-bar {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(20, 15, 12, 0.95);
+    backdrop-filter: blur(10px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    z-index: 50;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .action-bar-hint {
+    text-align: center;
+    color: rgba(255, 255, 255, 0.4);
+    font-size: 9px;
+    margin-bottom: 8px;
+  }
+  .action-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .action-btn {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 8px;
+    border-radius: 8px;
+    font-size: 11px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .action-btn-icon { font-size: 16px; }
+  .action-btn.primary {
+    background: var(--gold-bg);
+    color: var(--gold-deep);
+    border-color: var(--gold-bg);
+  }
+
+  /* ===== 履歴・顧客 ===== */
+  .history-item, .customer-item {
+    background: var(--surface);
+    border-radius: 12px;
+    padding: 12px 14px;
+    margin-bottom: 8px;
+    box-shadow: var(--shadow);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+    text-align: left;
+    border: none;
+  }
+  .history-icon {
+    width: 36px; height: 36px;
+    border-radius: 10px;
+    background: var(--success-bg);
+    color: var(--success);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+  .history-body, .customer-body { flex: 1; min-width: 0; }
+  .history-title, .customer-name { font-size: 13px; font-weight: 700; color: var(--ink); margin-bottom: 2px; }
+  .history-sub, .customer-sub {
+    font-size: 11px;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .history-date {
+    font-size: 10px;
+    color: var(--ink-muted);
+    text-align: right;
+    white-space: nowrap;
+  }
+  .customer-avatar {
+    width: 40px; height: 40px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .customer-id {
+    font-size: 10px;
+    color: var(--ink-muted);
+    font-family: 'SF Mono', monospace;
+  }
+
+  /* ===== Toast / Modal ===== */
+  .toast {
+    position: fixed;
+    top: calc(50px + env(safe-area-inset-top));
+    left: 50%;
+    transform: translateX(-50%) translateY(-100px);
+    background: var(--ink);
+    color: #fff;
+    padding: 12px 20px;
+    border-radius: 999px;
+    font-size: 13px; font-weight: 600;
+    z-index: 1000;
+    transition: transform 0.3s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+    pointer-events: none;
+    white-space: nowrap;
+    max-width: 90vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(26, 31, 46, 0.5);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: var(--surface);
+    width: 100%;
+    max-width: 480px;
+    border-radius: 20px 20px 0 0;
+    padding: 24px 20px calc(24px + env(safe-area-inset-bottom));
+  }
+  .modal-title { font-size: 17px; font-weight: 700; margin-bottom: 8px; }
+  .modal-body {
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    margin-bottom: 16px;
+  }
+  .modal-actions { display: flex; gap: 8px; }
+  .modal-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    font-size: 14px; font-weight: 600;
+    border: none;
+  }
+  .modal-btn.secondary {
+    background: var(--bg);
+    color: var(--ink-soft);
+    border: 1px solid var(--border);
+  }
+  .modal-btn.primary { background: var(--accent); color: #fff; }
+
+  /* ===== 設定 ===== */
+  .settings-section { padding: 16px; }
+  .settings-card {
+    background: var(--surface);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+  }
+  .settings-row {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 12px;
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-body { flex: 1; }
+  .settings-row-title { font-size: 14px; font-weight: 600; color: var(--ink); }
+  .settings-row-sub {
+    font-size: 11px;
+    color: var(--ink-muted);
+    margin-top: 2px;
+    line-height: 1.4;
+  }
+  .demo-help-banner {
+    background: linear-gradient(135deg, #faf3e0 0%, #f5e6c8 100%);
+    border: 1px solid #e0c896;
+    border-radius: 12px;
+    padding: 14px;
+    margin: 12px 16px 0;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+  .demo-help-icon {
+    width: 28px; height: 28px;
+    background: var(--gold);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .demo-help-body { flex: 1; }
+  .demo-help-title {
+    font-size: 13px; font-weight: 700;
+    color: var(--gold-deep);
+    margin-bottom: 4px;
+  }
+  .demo-help-text {
+    font-size: 11px;
+    color: var(--admin-accent, #6b4423);
+    line-height: 1.5;
+  }
+  .demo-help-text strong { font-weight: 700; }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <div class="demo-badge">DEMO MODE</div>
+  <button class="demo-reset" onclick="resetDemo()">↻ デモ初期化</button>
+
+  <!-- ============================================ -->
+  <!-- 画面1: ホーム -->
+  <!-- ============================================ -->
+  <section class="view active" id="view-home">
+    <header class="app-header">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div class="header-date" id="todayDate">―</div>
+        <button class="app-header-icon" onclick="showView('settings')">⚙</button>
+      </div>
+      <div class="header-greeting">山田さん、こんにちは</div>
+      <div class="header-summary" id="summary">本日のご予定を確認します</div>
+    </header>
+
+    <div class="demo-help-banner">
+      <div class="demo-help-icon">i</div>
+      <div class="demo-help-body">
+        <div class="demo-help-title">デモモードで動作中</div>
+        <div class="demo-help-text">
+          サンプル顧客6名・クーポン6件で操作を試せます。<strong>左上「↻ デモ初期化」</strong>でいつでも元の状態に戻せます。
+        </div>
+      </div>
+    </div>
+
+    <div class="quick-actions">
+      <button class="quick-btn" onclick="openCustomerForm()">
+        <div class="quick-btn-icon add">＋</div>
+        <div class="quick-btn-label">顧客を追加</div>
+      </button>
+      <button class="quick-btn" onclick="openCouponListFree()">
+        <div class="quick-btn-icon list">◫</div>
+        <div class="quick-btn-label">クーポン一覧</div>
+      </button>
+    </div>
+
+    <section class="section" id="eventsToday"></section>
+    <section class="section" id="eventsWeek"></section>
+    <section class="section" id="eventsMonth"></section>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 画面: 顧客リスト -->
+  <!-- ============================================ -->
+  <section class="view" id="view-customers">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="showView('home')">‹</button>
+        <div style="flex:1;">
+          <div class="app-header-title">顧客一覧</div>
+          <div class="app-header-sub" id="customerCount">0 名</div>
+        </div>
+        <button class="app-header-icon" onclick="openCustomerForm()">＋</button>
+      </div>
+    </header>
+
+    <div class="search-bar" style="padding-top:16px;">
+      <div class="search-input-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" type="text" id="customerSearch" placeholder="名前・ふりがなで検索" oninput="renderCustomerList()">
+      </div>
+    </div>
+
+    <div class="section" id="customerList"></div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 画面2: 顧客登録 -->
+  <!-- ============================================ -->
+  <section class="view" id="view-customerForm">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="confirmCancelForm()">‹</button>
+        <div>
+          <div class="app-header-title" id="formTitle">顧客を追加</div>
+          <div class="app-header-sub">必須4項目を入力</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="progress-bar">
+      <div class="progress-track">
+        <div class="progress-fill" id="formProgress" style="width: 0%;"></div>
+      </div>
+      <div class="progress-text" id="formProgressText">0 / 4 項目</div>
+    </div>
+
+    <div class="duplicate-alert" id="duplicateAlert">
+      <div class="duplicate-alert-icon">!</div>
+      <div class="duplicate-alert-body">
+        <strong>同名・同生年月日の顧客が登録済</strong>
+        <span id="duplicateName"></span>
+        <div class="duplicate-alert-actions">
+          <button class="duplicate-alert-btn primary" onclick="openExistingCustomer()">既存顧客を開く</button>
+          <button class="duplicate-alert-btn" onclick="dismissDuplicate()">別人として続行</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="form-section">
+      <div class="form-section-title">必須情報</div>
+      <div class="form-card">
+        <div class="field">
+          <div class="field-label">氏名 <span class="field-required">必須</span></div>
+          <div class="field-name-split">
+            <div>
+              <div class="field-name-sub-label">姓</div>
+              <input class="field-input" type="text" id="f_lastName" oninput="validateForm()">
+            </div>
+            <div>
+              <div class="field-name-sub-label">名</div>
+              <input class="field-input" type="text" id="f_firstName" oninput="validateForm()">
+            </div>
+          </div>
+          <div class="field-furigana">
+            <div class="field-name-split">
+              <div>
+                <div class="field-name-sub-label">ふりがな（姓） <span class="field-required" style="font-size:9px;">必須</span></div>
+                <input class="field-input small" type="text" id="f_lastKana" oninput="validateForm()">
+              </div>
+              <div>
+                <div class="field-name-sub-label">ふりがな（名） <span class="field-required" style="font-size:9px;">必須</span></div>
+                <input class="field-input small" type="text" id="f_firstKana" oninput="validateForm()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">生年月日 <span class="field-required">必須</span></div>
+          <input class="field-input" type="date" id="f_birthday" oninput="validateForm()">
+          <div class="field-hint">→ 誕生日からのライフイベントを自動通知</div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">居住地 <span class="field-required">必須</span></div>
+          <div class="field-name-split">
+            <div>
+              <div class="field-name-sub-label">都道府県</div>
+              <div class="field-select-wrap">
+                <select class="field-select" id="f_pref" onchange="validateForm()">
+                  <option value="">選択</option>
+                  <option>愛知県</option>
+                  <option>東京都</option>
+                  <option>大阪府</option>
+                  <option>京都府</option>
+                  <option>神奈川県</option>
+                </select>
+                <div class="field-select-arrow">▾</div>
+              </div>
+            </div>
+            <div>
+              <div class="field-name-sub-label">市区町村</div>
+              <input class="field-input" type="text" id="f_city" placeholder="例：名古屋市中区" oninput="validateForm()">
+            </div>
+          </div>
+        </div>
+
+        <div class="field">
+          <div class="field-label">顧客ID <span class="field-required">必須</span></div>
+          <div class="id-toggle">
+            <button class="id-toggle-btn active" id="idAutoBtn" onclick="setIdMode('auto')">自動採番</button>
+            <button class="id-toggle-btn" id="idManualBtn" onclick="setIdMode('manual')">手入力</button>
+          </div>
+          <div id="idAutoView">
+            <div class="id-auto-display" id="autoId">C-0001</div>
+          </div>
+          <div id="idManualView" style="display:none;">
+            <input class="field-input" type="text" id="f_manualId" placeholder="例：A-12345">
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-title">ライフイベント（任意）</div>
+      <div class="events-card">
+        <div id="eventsList"></div>
+        <button class="event-chip-add" onclick="addEventField()">＋ ライフイベントを追加</button>
+      </div>
+    </section>
+
+    <section class="form-section">
+      <div class="form-section-title">任意メモ（端末内のみ保存）</div>
+      <div class="form-card">
+        <div class="field">
+          <div class="field-label">職業 <span class="field-optional">任意</span></div>
+          <input class="field-input small" type="text" id="f_job" placeholder="例：会社員">
+        </div>
+        <div class="field">
+          <div class="field-label">趣味・嗜好 <span class="field-optional">任意</span></div>
+          <input class="field-input small" type="text" id="f_hobby" placeholder="例：ゴルフ、日本酒">
+          <div class="field-hint">→ クーポン選定の参考になります</div>
+        </div>
+        <div class="field">
+          <div class="field-label">備考 <span class="field-optional">任意</span></div>
+          <textarea class="field-textarea" id="f_notes" placeholder=""></textarea>
+        </div>
+      </div>
+    </section>
+
+    <div class="commit-bar">
+      <div class="commit-row">
+        <button class="commit-btn-secondary" onclick="confirmCancelForm()">キャンセル</button>
+        <button class="commit-btn" id="saveCustomerBtn" onclick="saveCustomer()" disabled>登録する</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 画面3: クーポン一覧 -->
+  <!-- ============================================ -->
+  <section class="view" id="view-coupons">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="showView('home')">‹</button>
+        <div>
+          <div class="app-header-title">クーポンを選ぶ</div>
+          <div class="app-header-sub" id="couponHeaderSub">最大3件まで選択可</div>
+        </div>
+      </div>
+      <div class="customer-context" id="couponCustomerContext" style="display:none;">
+        <div class="context-avatar" id="couponCustomerAvatar">―</div>
+        <div class="context-info">
+          <div class="context-name" id="couponCustomerName">―</div>
+          <div class="context-event" id="couponCustomerEvent">―</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="search-bar">
+      <div class="search-input-wrap">
+        <span class="search-icon">⌕</span>
+        <input class="search-input" type="text" id="couponSearch" placeholder="店舗名・料理ジャンルで検索" oninput="renderCouponList()">
+      </div>
+    </div>
+
+    <div class="filter-row" id="couponFilters"></div>
+
+    <div class="results-bar">
+      <div class="results-count" id="couponResultCount">―</div>
+    </div>
+
+    <div class="coupon-list" id="couponList"></div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 画面4: メッセージ -->
+  <!-- ============================================ -->
+  <section class="view" id="view-message">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="showView('coupons')">‹</button>
+        <div style="flex:1;">
+          <div class="app-header-title">メッセージを書く</div>
+          <div class="save-status" id="saveStatus">未入力</div>
+        </div>
+      </div>
+      <div class="customer-context" id="messageCustomerContext">
+        <div class="context-avatar" id="messageCustomerAvatar">―</div>
+        <div class="context-info">
+          <div class="context-name" id="messageCustomerName">―</div>
+          <div class="context-event" id="messageCustomerEvent">―</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="step-indicator">
+      <div class="step-item">
+        <div class="step-num">✓</div>
+        <div class="step-label">クーポン</div>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item">
+        <div class="step-num active">2</div>
+        <div class="step-label active">メッセージ</div>
+      </div>
+      <div class="step-divider"></div>
+      <div class="step-item">
+        <div class="step-num pending">3</div>
+        <div class="step-label">提示</div>
+      </div>
+    </div>
+
+    <div class="message-paper">
+      <div class="message-paper-label">Your Message *必須</div>
+      <div class="message-paper-occasion" id="messageOccasion">―</div>
+      <textarea class="message-textarea" id="messageText" placeholder="自筆メッセージを書いてください（必須）" oninput="onMessageInput()"></textarea>
+      <div class="message-signature">— 山田 典広</div>
+    </div>
+
+    <div class="char-counter">
+      <div class="char-count" id="charCount">0 字</div>
+      <div class="char-bar">
+        <div class="char-bar-fill" id="charBar" style="width:0%;"></div>
+      </div>
+      <div class="char-count">80〜200字推奨</div>
+    </div>
+
+    <div class="commit-bar">
+      <div class="commit-row">
+        <div class="commit-info">
+          <div class="commit-info-title" id="commitMessageStatus">未入力</div>
+          <div class="commit-info-sub">必須項目</div>
+        </div>
+        <button class="commit-btn" id="goPresentBtn" onclick="goToPresentation()" disabled>提示へ →</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 画面5: 提示 -->
+  <!-- ============================================ -->
+  <section class="view presentation" id="view-presentation">
+    <div class="presentation-bg"></div>
+
+    <div class="presentation-header">
+      <button class="presentation-back" onclick="showView('message')">‹</button>
+      <div>
+        <div class="presentation-title" id="presentRecipient">―</div>
+        <div class="presentation-subtitle" id="presentCounter">PRESENTING · 1 / 1</div>
+      </div>
+      <div style="width:36px;"></div>
+    </div>
+
+    <div class="mode-toggle">
+      <button class="mode-btn active" id="modeScreenBtn" onclick="setMode('screen')">📱 画面で見せる</button>
+      <button class="mode-btn" id="modePrintBtn" onclick="setMode('print')">🖨 A4印刷</button>
+    </div>
+
+    <div class="card-stack">
+      <div class="stack-meta">
+        <span class="stack-meta-current" id="stackCurrent">1 枚目</span> / 全 <span id="stackTotal">1</span> 枚
+      </div>
+      <div id="giftCardsContainer"></div>
+      <div class="pagination" id="paginationDots"></div>
+    </div>
+
+    <div class="action-bar">
+      <div class="action-bar-hint">提供完了したら中央ボタンをタップ</div>
+      <div class="action-row">
+        <button class="action-btn" onclick="showView('message')">
+          <span class="action-btn-icon">✎</span>
+          <span>編集に戻る</span>
+        </button>
+        <button class="action-btn primary" onclick="recordDelivery()">
+          <span class="action-btn-icon">✓</span>
+          <span>提供完了を記録</span>
+        </button>
+        <button class="action-btn" onclick="toast('LINE・メール・印刷（本番実装予定）')">
+          <span class="action-btn-icon">⇪</span>
+          <span>共有・印刷</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 履歴 -->
+  <!-- ============================================ -->
+  <section class="view" id="view-history">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="showView('home')">‹</button>
+        <div>
+          <div class="app-header-title">クーポン提供履歴</div>
+          <div class="app-header-sub" id="historyCount">0 件</div>
+        </div>
+      </div>
+    </header>
+    <div class="section" id="historyList"></div>
+  </section>
+
+  <!-- ============================================ -->
+  <!-- 設定 -->
+  <!-- ============================================ -->
+  <section class="view" id="view-settings">
+    <header class="app-header">
+      <div class="app-header-row">
+        <button class="app-header-back" onclick="showView('home')">‹</button>
+        <div>
+          <div class="app-header-title">設定</div>
+          <div class="app-header-sub">プロトタイプ v0.1</div>
+        </div>
+      </div>
+    </header>
+
+    <div class="settings-section">
+      <div class="form-section-title">デモ操作</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title">デモ初期化</div>
+            <div class="settings-row-sub">追加した顧客・履歴を消して最初の状態に戻します</div>
+          </div>
+          <button class="commit-btn-secondary" onclick="resetDemo()">初期化</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <div class="form-section-title">アプリ情報</div>
+      <div class="settings-card">
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title">ライフイベント営業支援</div>
+            <div class="settings-row-sub">プロトタイプ v0.1 ／ 2026.05<br>本番では端末内に個人情報を保存します</div>
+          </div>
+        </div>
+        <div class="settings-row">
+          <div class="settings-row-body">
+            <div class="settings-row-title">サンプルデータ</div>
+            <div class="settings-row-sub">顧客6名・加盟店クーポン6件をセット</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <nav class="bottom-nav" id="bottomNav">
+    <button class="nav-item active" data-view="home" onclick="showView('home')">
+      <div class="nav-icon">⌂</div>
+      <div>ホーム</div>
+    </button>
+    <button class="nav-item" data-view="customers" onclick="showView('customers')">
+      <div class="nav-icon">👥</div>
+      <div>顧客</div>
+    </button>
+    <button class="nav-item" data-view="coupons" onclick="openCouponListFree()">
+      <div class="nav-icon">◫</div>
+      <div>クーポン</div>
+    </button>
+    <button class="nav-item" data-view="history" onclick="showView('history')">
+      <div class="nav-icon">≡</div>
+      <div>履歴</div>
+    </button>
+  </nav>
+
+  <div class="toast" id="toast"></div>
+  <div class="modal-backdrop" id="modal">
+    <div class="modal">
+      <div class="modal-title" id="modalTitle"></div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-actions" id="modalActions"></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ===================================================================
+// モックデータ（不変オリジナル）
+// ===================================================================
+const MOCK_DATA = {
+  customers: [
+    {
+      id: 'C-0042', lastName: '佐藤', firstName: '健一',
+      lastKana: 'さとう', firstKana: 'けんいち',
+      birthday: '1972-05-28', // 本日が誕生日になるよう動的に
+      pref: '愛知県', city: '名古屋市中区',
+      events: [{ type: 'wedding', label: '結婚記念日', date: '2005-06-15' }],
+      job: '会社員（製造業）', hobby: 'ゴルフ、日本酒、家族での外食',
+      notes: '記念日を大切にする方'
+    },
+    {
+      id: 'C-0118', lastName: '田中', firstName: '美和',
+      lastKana: 'たなか', firstKana: 'みわ',
+      birthday: '1974-09-12',
+      pref: '愛知県', city: '名古屋市中区',
+      events: [{ type: 'child_school', label: '長男 大学入学', date: '2026-05-28' }],
+      job: 'パート', hobby: '家族外食、お祝い事',
+      notes: '長男大学入学'
+    },
+    {
+      id: 'C-0007', lastName: '鈴木', firstName: '直樹',
+      lastKana: 'すずき', firstKana: 'なおき',
+      birthday: '1965-11-08',
+      pref: '愛知県', city: '岡崎市',
+      events: [{ type: 'wedding', label: '結婚20周年記念日', date: '2006-05-31' }],
+      job: '自営業', hobby: 'ワイン、釣り',
+      notes: '20周年記念'
+    },
+    {
+      id: 'C-0089', lastName: '高橋', firstName: '葵',
+      lastKana: 'たかはし', firstKana: 'あおい',
+      birthday: '1989-03-14',
+      pref: '愛知県', city: '名古屋市千種区',
+      events: [{ type: 'birth', label: '出産予定日', date: '2026-06-01' }],
+      job: '主婦', hobby: 'カフェ、ヨガ、写真',
+      notes: '第一子妊娠中'
+    },
+    {
+      id: 'C-0024', lastName: '渡辺', firstName: '麻衣',
+      lastKana: 'わたなべ', firstKana: 'まい',
+      birthday: '1981-07-22',
+      pref: '愛知県', city: '名古屋市東区',
+      events: [{ type: 'child_school', label: '次女 小学校入学', date: '2026-06-15' }],
+      job: '会社員', hobby: '料理、子供の習い事',
+      notes: ''
+    },
+    {
+      id: 'C-0055', lastName: '伊藤', firstName: '陽子',
+      lastKana: 'いとう', firstKana: 'ようこ',
+      birthday: '1978-12-03',
+      pref: '愛知県', city: '名古屋市北区',
+      events: [],
+      job: '会社員', hobby: 'カフェ、読書',
+      notes: ''
+    }
+  ],
+  history: [
+    {
+      id: 'H-001',
+      date: getRelativeDate(-7),
+      customerId: 'C-0024',
+      customerName: '渡辺 麻衣 様',
+      eventLabel: '誕生日',
+      couponShop: 'カフェ Tsubaki',
+      couponTitle: 'ベビー＆ママ ドリンク無料',
+      message: 'お誕生日おめでとうございます。'
+    }
+  ],
+  nextCustomerId: 200
+};
+
+function getRelativeDate(daysFromNow) {
+  const d = new Date();
+  d.setDate(d.getDate() + daysFromNow);
+  return d.toISOString();
+}
+
+// 動的調整：佐藤様の誕生日を「今日」、田中様の入学日を「今日」に
+(() => {
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  // 佐藤様：誕生日を今日に（年は54歳になるよう調整）
+  const satoBirthYear = today.getFullYear() - 54;
+  MOCK_DATA.customers[0].birthday = `${satoBirthYear}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  
+  // 田中様：長男入学日を今日に
+  MOCK_DATA.customers[1].events[0].date = todayStr;
+  
+  // 鈴木様：結婚記念日を今週中（3日後）に
+  const inThreeDays = new Date(today);
+  inThreeDays.setDate(today.getDate() + 3);
+  const yearsAgo20 = inThreeDays.getFullYear() - 20;
+  MOCK_DATA.customers[2].events[0].date = `${yearsAgo20}-${String(inThreeDays.getMonth() + 1).padStart(2, '0')}-${String(inThreeDays.getDate()).padStart(2, '0')}`;
+  
+  // 高橋様：出産予定日を5日後に
+  const inFiveDays = new Date(today);
+  inFiveDays.setDate(today.getDate() + 5);
+  MOCK_DATA.customers[3].events[0].date = `${inFiveDays.getFullYear()}-${String(inFiveDays.getMonth() + 1).padStart(2, '0')}-${String(inFiveDays.getDate()).padStart(2, '0')}`;
+  
+  // 渡辺様：次女入学を15日後に
+  const in15Days = new Date(today);
+  in15Days.setDate(today.getDate() + 15);
+  MOCK_DATA.customers[4].events[0].date = `${in15Days.getFullYear()}-${String(in15Days.getMonth() + 1).padStart(2, '0')}-${String(in15Days.getDate()).padStart(2, '0')}`;
+})();
+
+const COUPONS = [
+  {
+    id: 'CP-001', shop: '割烹 山ノ井', area: '中区',
+    category: '寿司・割烹', rating: 4.6,
+    discount: 'コース 20% OFF',
+    discountSub: 'ペアコース・通常 ¥16,500',
+    tags: ['日本酒', '家族外食', '個室あり', '記念日'],
+    customTags: ['女将メッセージ対応', '地酒30種'],
+    recommend: '地元の日本酒が30種揃う割烹。記念日特典で女将さんがメッセージカード手配してくれます。',
+    expiry: '2026-07-31', photoClass: 'shop1'
+  },
+  {
+    id: 'CP-002', shop: '炭火と地酒 とおの', area: '千種区',
+    category: '居酒屋・酒場', rating: 4.4,
+    discount: '食前酒サービス',
+    discountSub: '本日のおすすめ前菜',
+    tags: ['日本酒', 'カウンター'],
+    customTags: ['大将が地酒に詳しい'],
+    recommend: '落ち着いた雰囲気のカウンター中心。誕生日のお祝いに花を添えてくれます。',
+    expiry: '2026-06-30', photoClass: 'shop2'
+  },
+  {
+    id: 'CP-003', shop: '寿司 まる新', area: '東区',
+    category: '寿司・割烹', rating: 4.5,
+    discount: '祝・進学コース 10% OFF',
+    discountSub: 'お子様コース ¥8,800',
+    tags: ['家族外食', '個室あり', '子連れ可'],
+    customTags: ['ご家族のお祝いに'],
+    recommend: '個室で静かに祝い事ができます。お子様メニューも充実。',
+    expiry: '2026-08-31', photoClass: 'shop3'
+  },
+  {
+    id: 'CP-004', shop: 'トラットリア ベルナ', area: '中区',
+    category: '洋食・イタリアン', rating: 4.3,
+    discount: 'ペアコース 15% OFF',
+    discountSub: 'ペアディナー ¥12,000〜',
+    tags: ['ワイン', '記念日', 'デート'],
+    customTags: ['テラス席あり'],
+    recommend: '本格イタリアン。記念日プレートのサプライズ対応可。',
+    expiry: '2026-09-30', photoClass: 'shop4'
+  },
+  {
+    id: 'CP-005', shop: 'カフェ Tsubaki', area: '千種区',
+    category: 'カフェ・喫茶', rating: 4.2,
+    discount: 'ベビー＆ママ ドリンク無料',
+    discountSub: '同伴1名様',
+    tags: ['子連れ可', 'カフェ', 'ベビーカーOK'],
+    customTags: ['ベビーフレンドリー'],
+    recommend: 'ベビーカー入店歓迎の落ち着いたカフェ。授乳室あり。',
+    expiry: '2026-12-31', photoClass: 'shop5'
+  },
+  {
+    id: 'CP-006', shop: '和食 ふじ家', area: '東区',
+    category: '和食', rating: 4.4,
+    discount: '前菜サービス',
+    discountSub: '日替わり3種盛り',
+    tags: ['和食', '接待', '個室あり'],
+    customTags: ['静かな個室'],
+    recommend: '接待にも使える落ち着いた和食店。',
+    expiry: '2026-07-15', photoClass: 'shop6'
+  }
+];
+
+const EVENT_TYPES = [
+  { key: 'spouse_birth', label: '配偶者の誕生日' },
+  { key: 'wedding', label: '結婚記念日' },
+  { key: 'child_birth', label: '子の生年月日' },
+  { key: 'child_school', label: '子の入学予定' },
+  { key: 'birth', label: '出産予定日' }
+];
+
+// ===================================================================
+// アプリ状態（メモリ内のみ・リロードでリセット）
+// ===================================================================
+let data = JSON.parse(JSON.stringify(MOCK_DATA));
+
+const state = {
+  currentCustomer: null,
+  currentEventLabel: null,
+  currentEventType: null,
+  selectedCoupons: [],
+  currentMessage: '',
+  presentMode: 'screen',
+  currentCardIndex: 0,
+  filterCategory: 'all',
+  editingCustomerId: null,
+  draftEvents: [],
+  saveTimer: null,
+  duplicateCustomer: null
+};
+
+function resetDemo() {
+  showModal({
+    title: 'デモを初期化しますか？',
+    body: '追加した顧客や履歴がすべて消えて、最初の状態に戻ります。',
+    actions: [
+      { label: 'キャンセル', class: 'secondary' },
+      { label: '初期化する', class: 'primary', onclick: () => {
+        data = JSON.parse(JSON.stringify(MOCK_DATA));
+        // 動的調整を再適用
+        const today = new Date();
+        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        data.customers[0].birthday = `${today.getFullYear() - 54}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        data.customers[1].events[0].date = todayStr;
+        const inThreeDays = new Date(today); inThreeDays.setDate(today.getDate() + 3);
+        data.customers[2].events[0].date = `${inThreeDays.getFullYear() - 20}-${String(inThreeDays.getMonth() + 1).padStart(2, '0')}-${String(inThreeDays.getDate()).padStart(2, '0')}`;
+        const inFiveDays = new Date(today); inFiveDays.setDate(today.getDate() + 5);
+        data.customers[3].events[0].date = `${inFiveDays.getFullYear()}-${String(inFiveDays.getMonth() + 1).padStart(2, '0')}-${String(inFiveDays.getDate()).padStart(2, '0')}`;
+        const in15Days = new Date(today); in15Days.setDate(today.getDate() + 15);
+        data.customers[4].events[0].date = `${in15Days.getFullYear()}-${String(in15Days.getMonth() + 1).padStart(2, '0')}-${String(in15Days.getDate()).padStart(2, '0')}`;
+        state.selectedCoupons = [];
+        state.currentMessage = '';
+        state.currentCustomer = null;
+        showView('home');
+        toast('初期化しました');
+      }}
+    ]
+  });
+}
+
+// ===================================================================
+// 画面遷移
+// ===================================================================
+function showView(viewName) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + viewName);
+  if (el) el.classList.add('active');
+
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const navBtn = document.querySelector('.nav-item[data-view="' + viewName + '"]');
+  if (navBtn) navBtn.classList.add('active');
+
+  const hideNav = ['presentation', 'message', 'coupons', 'customerForm'].includes(viewName);
+  document.getElementById('bottomNav').style.display = hideNav ? 'none' : 'grid';
+
+  if (viewName === 'home') renderHome();
+  if (viewName === 'customers') renderCustomerList();
+  if (viewName === 'history') renderHistory();
+
+  window.scrollTo(0, 0);
+}
+
+// ===================================================================
+// ホーム画面
+// ===================================================================
+function renderHome() {
+  const now = new Date();
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  document.getElementById('todayDate').textContent =
+    `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日（${weekdays[now.getDay()]}）`;
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const todayKey = formatDate(today);
+  const events = [];
+
+  data.customers.forEach(c => {
+    const bd = getNextBirthdayDate(c.birthday, today);
+    if (bd) events.push({ customer: c, date: bd, type: 'birthday', label: getAgeBasedLabel(c.birthday, bd) });
+    (c.events || []).forEach(e => {
+      const nextDate = getNextEventDate(e.date, today, e.type);
+      if (nextDate) events.push({ customer: c, date: nextDate, type: e.type, label: e.label });
+    });
+  });
+
+  events.sort((a, b) => a.date - b.date);
+
+  const lastContactMap = {};
+  data.history.forEach(h => {
+    if (!lastContactMap[h.customerId] || h.date > lastContactMap[h.customerId]) {
+      lastContactMap[h.customerId] = h.date;
+    }
+  });
+
+  const deliveredToday = {};
+  data.history.forEach(h => {
+    if (h.date.startsWith(todayKey)) {
+      deliveredToday[h.customerId] = h;
+    }
+  });
+
+  const todayEvents = events.filter(e => isSameDay(e.date, today));
+  const weekEnd = new Date(today); weekEnd.setDate(today.getDate() + 7);
+  const weekEvents = events.filter(e => e.date > today && e.date <= weekEnd);
+  const monthEnd = new Date(today); monthEnd.setMonth(today.getMonth() + 1);
+  const monthEvents = events.filter(e => e.date > weekEnd && e.date <= monthEnd);
+
+  document.getElementById('summary').innerHTML =
+    todayEvents.length > 0
+    ? `今日は <strong>${todayEvents.length}名</strong> に連絡するタイミングです`
+    : '今日の通知はありません';
+
+  renderEventSection('eventsToday', '今日', todayEvents, 'urgent', lastContactMap, deliveredToday);
+  renderEventSection('eventsWeek', '今週中', weekEvents, 'warm', lastContactMap, deliveredToday);
+  renderEventSection('eventsMonth', '今月後半', monthEvents, 'upcoming', lastContactMap, deliveredToday);
+}
+
+function renderEventSection(elId, title, events, severity, lastContactMap, deliveredToday) {
+  const el = document.getElementById(elId);
+  if (events.length === 0) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="section-head">
+      <div class="section-title">${title}</div>
+      <div class="section-count">${events.length}件</div>
+    </div>
+    ${events.map(e => {
+      const isDone = deliveredToday[e.customer.id];
+      const lastContact = lastContactMap[e.customer.id];
+      const lastContactText = lastContact ? `最終接触: ${getRelativeTime(lastContact)}` : '初回連絡';
+      const dateLabel = formatEventBadge(e.date, severity);
+      const icon = getEventIcon(e.type);
+      const safeLabel = e.label.replace(/<[^>]*>/g, '').replace(/'/g, "\\'");
+      return `
+        <div class="event-card ${severity}">
+          <div class="card-top">
+            <div>
+              <div class="card-customer">${e.customer.lastName} ${e.customer.firstName} 様</div>
+              <div class="card-customer-id">顧客ID: ${e.customer.id}</div>
+            </div>
+            <div class="card-badge ${severity}">${dateLabel}</div>
+          </div>
+          <div class="card-event">
+            <div class="card-event-icon">${icon}</div>
+            <div class="card-event-text">${e.label}</div>
+          </div>
+          <div class="card-bottom">
+            <div class="card-meta ${isDone ? 'done' : ''}">${isDone ? '✓ 本日提供済' : lastContactText}</div>
+            <button class="card-cta ${isDone ? 'done' : ''}" onclick="${isDone ? `showView('history')` : `openCouponList('${e.customer.id}', '${safeLabel}', '${e.type}')`}">${isDone ? '履歴を見る' : 'クーポンを選ぶ'}</button>
+          </div>
+        </div>
+      `;
+    }).join('')}
+  `;
+}
+
+function getEventIcon(type) {
+  const icons = {
+    birthday: '🎂', spouse_birth: '🎂', wedding: '💐',
+    child_birth: '🎂', child_school: '🎒', birth: '👶'
+  };
+  return icons[type] || '🎉';
+}
+
+function getAgeBasedLabel(birthday, nextDate) {
+  const age = nextDate.getFullYear() - new Date(birthday).getFullYear();
+  return `<strong>${age}歳のお誕生日</strong>`;
+}
+
+function getNextBirthdayDate(birthday, fromDate) {
+  if (!birthday) return null;
+  const bd = new Date(birthday);
+  const year = fromDate.getFullYear();
+  let next = new Date(year, bd.getMonth(), bd.getDate());
+  if (next < fromDate) next = new Date(year + 1, bd.getMonth(), bd.getDate());
+  const monthLater = new Date(fromDate); monthLater.setMonth(fromDate.getMonth() + 1);
+  if (next > monthLater) return null;
+  return next;
+}
+
+function getNextEventDate(eventDate, fromDate, type) {
+  if (!eventDate) return null;
+  const ed = new Date(eventDate);
+  if (type === 'birth' || type === 'child_school') {
+    const monthLater = new Date(fromDate); monthLater.setMonth(fromDate.getMonth() + 1);
+    if (ed < fromDate || ed > monthLater) return null;
+    return ed;
+  }
+  const year = fromDate.getFullYear();
+  let next = new Date(year, ed.getMonth(), ed.getDate());
+  if (next < fromDate) next = new Date(year + 1, ed.getMonth(), ed.getDate());
+  const monthLater = new Date(fromDate); monthLater.setMonth(fromDate.getMonth() + 1);
+  if (next > monthLater) return null;
+  return next;
+}
+
+function formatEventBadge(date, severity) {
+  if (severity === 'urgent') return '本日';
+  const weekdays = ['日', '月', '火', '水', '木', '金', '土'];
+  return `${date.getMonth() + 1}/${date.getDate()}（${weekdays[date.getDay()]}）`;
+}
+
+function isSameDay(d1, d2) {
+  return d1.getFullYear() === d2.getFullYear() && d1.getMonth() === d2.getMonth() && d1.getDate() === d2.getDate();
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+function getRelativeTime(isoDate) {
+  const past = new Date(isoDate);
+  const now = new Date();
+  const diff = (now - past) / (1000 * 60 * 60 * 24);
+  if (diff < 1) return '本日';
+  if (diff < 7) return `${Math.floor(diff)}日前`;
+  if (diff < 30) return `${Math.floor(diff / 7)}週間前`;
+  return `${Math.floor(diff / 30)}ヶ月前`;
+}
+
+// ===================================================================
+// 顧客リスト
+// ===================================================================
+function renderCustomerList() {
+  const search = document.getElementById('customerSearch').value.trim();
+  let list = data.customers;
+
+  if (search) {
+    list = list.filter(c =>
+      c.lastName.includes(search) || c.firstName.includes(search) ||
+      c.lastKana.includes(search) || c.firstKana.includes(search) ||
+      c.id.toLowerCase().includes(search.toLowerCase())
+    );
+  }
+
+  document.getElementById('customerCount').textContent = `${data.customers.length} 名`;
+
+  const el = document.getElementById('customerList');
+  if (list.length === 0) {
+    el.innerHTML = '<div class="empty-state">該当する顧客がいません</div>';
+    return;
+  }
+
+  el.innerHTML = list.map(c => `
+    <button class="customer-item" onclick="openCustomerForm('${c.id}')">
+      <div class="customer-avatar">${c.lastName.charAt(0)}</div>
+      <div class="customer-body">
+        <div class="customer-name">${c.lastName} ${c.firstName} 様</div>
+        <div class="customer-sub">${c.pref || ''}${c.city || ''} ・ ${c.hobby || '趣味未登録'}</div>
+      </div>
+      <div class="customer-id">${c.id}</div>
+    </button>
+  `).join('');
+}
+
+// ===================================================================
+// 顧客登録フォーム
+// ===================================================================
+function openCustomerForm(editId) {
+  ['f_lastName','f_firstName','f_lastKana','f_firstKana','f_birthday','f_city','f_manualId','f_job','f_hobby','f_notes'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  document.getElementById('f_pref').value = '';
+  state.draftEvents = [];
+  state.editingCustomerId = null;
+
+  if (editId) {
+    const c = data.customers.find(x => x.id === editId);
+    if (c) {
+      state.editingCustomerId = c.id;
+      document.getElementById('formTitle').textContent = '顧客情報を編集';
+      document.getElementById('f_lastName').value = c.lastName || '';
+      document.getElementById('f_firstName').value = c.firstName || '';
+      document.getElementById('f_lastKana').value = c.lastKana || '';
+      document.getElementById('f_firstKana').value = c.firstKana || '';
+      document.getElementById('f_birthday').value = c.birthday || '';
+      document.getElementById('f_pref').value = c.pref || '';
+      document.getElementById('f_city').value = c.city || '';
+      document.getElementById('f_job').value = c.job || '';
+      document.getElementById('f_hobby').value = c.hobby || '';
+      document.getElementById('f_notes').value = c.notes || '';
+      state.draftEvents = JSON.parse(JSON.stringify(c.events || []));
+    }
+  } else {
+    document.getElementById('formTitle').textContent = '顧客を追加';
+  }
+
+  document.getElementById('autoId').textContent =
+    state.editingCustomerId || `C-${String(data.nextCustomerId).padStart(4, '0')}`;
+
+  document.getElementById('duplicateAlert').classList.remove('show');
+  renderEventsList();
+  validateForm();
+  showView('customerForm');
+}
+
+function setIdMode(mode) {
+  const isAuto = mode === 'auto';
+  document.getElementById('idAutoBtn').classList.toggle('active', isAuto);
+  document.getElementById('idManualBtn').classList.toggle('active', !isAuto);
+  document.getElementById('idAutoView').style.display = isAuto ? 'block' : 'none';
+  document.getElementById('idManualView').style.display = isAuto ? 'none' : 'block';
+  validateForm();
+}
+
+function validateForm() {
+  const isManual = document.getElementById('idManualBtn').classList.contains('active');
+  const idValid = isManual ? document.getElementById('f_manualId').value.trim().length > 0 : true;
+
+  const groupValid = [
+    document.getElementById('f_lastName').value.trim() && document.getElementById('f_firstName').value.trim() && document.getElementById('f_lastKana').value.trim() && document.getElementById('f_firstKana').value.trim(),
+    document.getElementById('f_birthday').value,
+    document.getElementById('f_pref').value && document.getElementById('f_city').value.trim(),
+    idValid
+  ];
+  const validCount = groupValid.filter(Boolean).length;
+  document.getElementById('formProgress').style.width = `${(validCount / 4) * 100}%`;
+  document.getElementById('formProgressText').textContent = `${validCount} / 4 項目`;
+
+  document.getElementById('saveCustomerBtn').disabled = !groupValid.every(Boolean);
+  checkDuplicate();
+}
+
+function checkDuplicate() {
+  const lastName = document.getElementById('f_lastName').value.trim();
+  const firstName = document.getElementById('f_firstName').value.trim();
+  const birthday = document.getElementById('f_birthday').value;
+
+  if (!lastName || !firstName || !birthday) {
+    document.getElementById('duplicateAlert').classList.remove('show');
+    return;
+  }
+
+  const dup = data.customers.find(c =>
+    c.lastName === lastName && c.firstName === firstName && c.birthday === birthday && c.id !== state.editingCustomerId
+  );
+
+  if (dup) {
+    document.getElementById('duplicateAlert').classList.add('show');
+    document.getElementById('duplicateName').textContent = `${dup.lastName} ${dup.firstName} 様（${dup.id}）と一致します。`;
+    state.duplicateCustomer = dup;
+  } else {
+    document.getElementById('duplicateAlert').classList.remove('show');
+    state.duplicateCustomer = null;
+  }
+}
+
+function openExistingCustomer() {
+  if (state.duplicateCustomer) openCustomerForm(state.duplicateCustomer.id);
+}
+
+function dismissDuplicate() {
+  document.getElementById('duplicateAlert').classList.remove('show');
+}
+
+function addEventField() {
+  state.draftEvents.push({ type: 'wedding', label: '結婚記念日', date: '' });
+  renderEventsList();
+}
+
+function renderEventsList() {
+  const el = document.getElementById('eventsList');
+  if (state.draftEvents.length === 0) {
+    el.innerHTML = '<div style="font-size:12px;color:var(--ink-muted);padding:8px 0;">まだ追加されていません</div>';
+    return;
+  }
+  el.innerHTML = state.draftEvents.map((e, i) => `
+    <div style="padding:10px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <select onchange="updateEventType(${i}, this)" style="border:none;background:transparent;font-size:13px;font-weight:600;outline:none;">
+          ${EVENT_TYPES.map(t => `<option value="${t.key}" ${e.type === t.key ? 'selected' : ''}>${t.label}</option>`).join('')}
+        </select>
+        <button onclick="removeEventDraft(${i})" style="background:none;border:none;color:var(--urgent);font-size:14px;">×</button>
+      </div>
+      <input type="date" value="${e.date}" onchange="state.draftEvents[${i}].date=this.value" style="border:1px solid var(--border);padding:6px 10px;border-radius:6px;width:100%;font-size:13px;">
+    </div>
+  `).join('');
+}
+
+function updateEventType(i, sel) {
+  state.draftEvents[i].type = sel.value;
+  state.draftEvents[i].label = sel.options[sel.selectedIndex].text;
+}
+
+function removeEventDraft(i) {
+  state.draftEvents.splice(i, 1);
+  renderEventsList();
+}
+
+function confirmCancelForm() {
+  const hasInput = ['f_lastName','f_firstName','f_birthday'].some(id => document.getElementById(id).value.trim());
+  if (!hasInput) { showView(state.editingCustomerId ? 'customers' : 'home'); return; }
+  showModal({
+    title: '入力をキャンセル？',
+    body: '入力内容は保存されません。',
+    actions: [
+      { label: '入力に戻る', class: 'secondary' },
+      { label: 'キャンセル', class: 'primary', onclick: () => showView(state.editingCustomerId ? 'customers' : 'home') }
+    ]
+  });
+}
+
+function saveCustomer() {
+  const isManual = document.getElementById('idManualBtn').classList.contains('active');
+  const id = isManual
+    ? document.getElementById('f_manualId').value.trim()
+    : (state.editingCustomerId || `C-${String(data.nextCustomerId).padStart(4, '0')}`);
+
+  const customer = {
+    id,
+    lastName: document.getElementById('f_lastName').value.trim(),
+    firstName: document.getElementById('f_firstName').value.trim(),
+    lastKana: document.getElementById('f_lastKana').value.trim(),
+    firstKana: document.getElementById('f_firstKana').value.trim(),
+    birthday: document.getElementById('f_birthday').value,
+    pref: document.getElementById('f_pref').value,
+    city: document.getElementById('f_city').value.trim(),
+    job: document.getElementById('f_job').value.trim(),
+    hobby: document.getElementById('f_hobby').value.trim(),
+    notes: document.getElementById('f_notes').value.trim(),
+    events: state.draftEvents.filter(e => e.date)
+  };
+
+  if (state.editingCustomerId) {
+    const i = data.customers.findIndex(c => c.id === state.editingCustomerId);
+    data.customers[i] = customer;
+    toast('更新しました');
+  } else {
+    data.customers.push(customer);
+    if (!isManual) data.nextCustomerId++;
+    toast('登録しました');
+  }
+  showView('customers');
+}
+
+// ===================================================================
+// クーポン一覧
+// ===================================================================
+function openCouponList(customerId, eventLabel, eventType) {
+  const customer = data.customers.find(c => c.id === customerId);
+  if (!customer) { toast('顧客が見つかりません'); return; }
+
+  state.currentCustomer = customer;
+  state.currentEventLabel = eventLabel.replace(/<[^>]*>/g, '');
+  state.currentEventType = eventType;
+  state.selectedCoupons = [];
+  state.filterCategory = 'all';
+
+  document.getElementById('couponCustomerContext').style.display = 'flex';
+  document.getElementById('couponCustomerAvatar').textContent = customer.lastName.charAt(0);
+  document.getElementById('couponCustomerName').textContent = `${customer.lastName} ${customer.firstName} 様`;
+  document.getElementById('couponCustomerEvent').innerHTML = `${getEventIcon(eventType)} ${state.currentEventLabel}`;
+  document.getElementById('couponHeaderSub').textContent = '最大3件まで選択可';
+
+  document.getElementById('couponSearch').value = '';
+  renderCouponFilters();
+  renderCouponList();
+  showView('coupons');
+}
+
+function openCouponListFree() {
+  state.currentCustomer = null;
+  state.selectedCoupons = [];
+  state.filterCategory = 'all';
+  document.getElementById('couponCustomerContext').style.display = 'none';
+  document.getElementById('couponHeaderSub').textContent = 'クーポン一覧（閲覧のみ）';
+  document.getElementById('couponSearch').value = '';
+  renderCouponFilters();
+  renderCouponList();
+  showView('coupons');
+}
+
+function renderCouponFilters() {
+  const categories = ['all', ...new Set(COUPONS.map(c => c.category))];
+  document.getElementById('couponFilters').innerHTML = categories.map(cat => {
+    const count = cat === 'all' ? COUPONS.length : COUPONS.filter(c => c.category === cat).length;
+    const active = state.filterCategory === cat ? 'active' : '';
+    const label = cat === 'all' ? 'すべて' : cat;
+    return `<button class="filter-chip ${active}" onclick="setFilter('${cat}')">${label} <span style="opacity:0.6;">${count}</span></button>`;
+  }).join('');
+}
+
+function setFilter(cat) {
+  state.filterCategory = cat;
+  renderCouponFilters();
+  renderCouponList();
+}
+
+function renderCouponList() {
+  const search = (document.getElementById('couponSearch').value || '').trim();
+  let list = COUPONS.slice();
+
+  if (state.filterCategory !== 'all') {
+    list = list.filter(c => c.category === state.filterCategory);
+  }
+  if (search) {
+    list = list.filter(c =>
+      c.shop.includes(search) || c.category.includes(search) ||
+      c.tags.some(t => t.includes(search))
+    );
+  }
+
+  if (state.currentCustomer && state.currentCustomer.hobby) {
+    const hobbies = state.currentCustomer.hobby.split(/[、,\s]+/).filter(Boolean);
+    list = list.map(c => {
+      const matches = c.tags.filter(t => hobbies.some(h => h.includes(t) || t.includes(h))).length;
+      return { ...c, matchScore: matches };
+    }).sort((a, b) => b.matchScore - a.matchScore);
+  }
+
+  document.getElementById('couponResultCount').innerHTML = `該当 <strong>${list.length}件</strong>${state.currentCustomer ? '（趣味マッチ順）' : ''}`;
+
+  const customerHobbies = state.currentCustomer ?
+    (state.currentCustomer.hobby || '').split(/[、,\s]+/).filter(Boolean) : [];
+
+  document.getElementById('couponList').innerHTML = list.map(c => {
+    const selected = state.selectedCoupons.includes(c.id);
+    const matchScore = c.matchScore || 0;
+    return `
+      <div class="coupon-card ${selected ? 'selected' : ''}" onclick="toggleCoupon('${c.id}')">
+        ${matchScore > 0 ? `<div class="coupon-recommended">★ 趣味マッチ</div>` : ''}
+        ${state.currentCustomer ? `<div class="coupon-check">✓</div>` : ''}
+        <div class="coupon-photo ${c.photoClass}">
+          <div class="photo-overlay"></div>
+          <div class="photo-discount">${c.discount}<span class="photo-discount-sub">${c.discountSub}</span></div>
+        </div>
+        <div class="coupon-body">
+          <div class="coupon-shop-row">
+            <div>
+              <div class="coupon-shop-name">${c.shop}</div>
+              <div class="coupon-shop-meta">📍 名古屋市${c.area}</div>
+            </div>
+            <div class="coupon-rating">★ ${c.rating}</div>
+          </div>
+          <div class="coupon-tags">
+            ${c.tags.map(t => {
+              const isMatch = customerHobbies.some(h => h.includes(t) || t.includes(h));
+              return `<span class="coupon-tag ${isMatch ? 'match' : ''}">${t}</span>`;
+            }).join('')}
+            ${c.customTags.map(t => `<span class="coupon-tag" style="border-style:dashed;color:var(--accent);">${t}</span>`).join('')}
+          </div>
+          <div class="coupon-recommend-text">
+            <div class="coupon-recommend-label">山田からのおすすめ</div>
+            ${c.recommend}
+          </div>
+        </div>
+        <div class="coupon-footer">
+          <div class="coupon-expiry">⏱ 〜${c.expiry}</div>
+          <div class="coupon-area">${c.area}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  updateSelectionBar();
+}
+
+function toggleCoupon(id) {
+  if (!state.currentCustomer) {
+    toast('顧客を選んでからクーポンを選択してください');
+    return;
+  }
+  const idx = state.selectedCoupons.indexOf(id);
+  if (idx >= 0) {
+    state.selectedCoupons.splice(idx, 1);
+  } else {
+    if (state.selectedCoupons.length >= 3) {
+      toast('最大3件まで選択できます');
+      return;
+    }
+    state.selectedCoupons.push(id);
+  }
+  renderCouponList();
+}
+
+function updateSelectionBar() {
+  let bar = document.querySelector('#view-coupons .selection-bar');
+  if (!state.currentCustomer) {
+    if (bar) bar.remove();
+    return;
+  }
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.className = 'selection-bar';
+    bar.innerHTML = `
+      <div class="selection-row">
+        <div class="selection-count">
+          <div class="selection-count-num" id="selCountNum">0 / 3</div>
+          <div class="selection-count-label">選択中（最大3件）</div>
+        </div>
+        <button class="commit-btn-secondary" onclick="clearSelection()">解除</button>
+        <button class="selection-btn" id="goMessageBtn" onclick="goToMessage()" disabled>提示へ →</button>
+      </div>
+    `;
+    document.getElementById('view-coupons').appendChild(bar);
+  }
+  document.getElementById('selCountNum').textContent = `${state.selectedCoupons.length} / 3`;
+  document.getElementById('goMessageBtn').disabled = state.selectedCoupons.length === 0;
+}
+
+function clearSelection() {
+  state.selectedCoupons = [];
+  renderCouponList();
+}
+
+// ===================================================================
+// メッセージ
+// ===================================================================
+function goToMessage() {
+  if (state.selectedCoupons.length === 0) return;
+  document.getElementById('messageCustomerAvatar').textContent = state.currentCustomer.lastName.charAt(0);
+  document.getElementById('messageCustomerName').textContent =
+    `${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様`;
+  document.getElementById('messageCustomerEvent').innerHTML =
+    `${getEventIcon(state.currentEventType)} ${state.currentEventLabel} ／ クーポン${state.selectedCoupons.length}枚`;
+  document.getElementById('messageOccasion').textContent =
+    `${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様へ — ${state.currentEventLabel}に`;
+  document.getElementById('messageText').value = state.currentMessage || '';
+  onMessageInput();
+  showView('message');
+}
+
+function onMessageInput() {
+  const text = document.getElementById('messageText').value;
+  state.currentMessage = text;
+  const len = text.length;
+
+  document.getElementById('charCount').textContent = `${len} 字`;
+  const charCountEl = document.getElementById('charCount');
+  charCountEl.classList.remove('warning', 'ok');
+  if (len >= 80 && len <= 200) charCountEl.classList.add('ok');
+  else if (len > 200) charCountEl.classList.add('warning');
+
+  document.getElementById('charBar').style.width = `${Math.min((len / 200) * 100, 100)}%`;
+  document.getElementById('goPresentBtn').disabled = len === 0;
+  document.getElementById('commitMessageStatus').textContent = len === 0 ? '未入力' : `入力完了（${len}字）`;
+
+  const status = document.getElementById('saveStatus');
+  status.textContent = '入力中...';
+  status.classList.remove('saved');
+  status.classList.add('saving');
+
+  if (state.saveTimer) clearTimeout(state.saveTimer);
+  state.saveTimer = setTimeout(() => {
+    status.textContent = '✓ 自動保存しました';
+    status.classList.remove('saving');
+    status.classList.add('saved');
+  }, 3000);
+}
+
+// ===================================================================
+// 提示
+// ===================================================================
+function goToPresentation() {
+  if (!state.currentMessage.trim()) { toast('メッセージを入力してください'); return; }
+  state.currentCardIndex = 0;
+  document.getElementById('presentRecipient').textContent =
+    `${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様へ`;
+  renderGiftCards();
+  showView('presentation');
+}
+
+function renderGiftCards() {
+  const cards = state.selectedCoupons.map(id => COUPONS.find(c => c.id === id));
+  document.getElementById('stackTotal').textContent = cards.length;
+  document.getElementById('stackCurrent').textContent = `${state.currentCardIndex + 1} 枚目`;
+  document.getElementById('presentCounter').textContent =
+    `PRESENTING · ${state.currentCardIndex + 1} / ${cards.length}`;
+
+  const card = cards[state.currentCardIndex];
+  if (!card) return;
+
+  const yyyy = new Date().getFullYear();
+  const mm = String(new Date().getMonth() + 1).padStart(2, '0');
+  const dd = String(new Date().getDate()).padStart(2, '0');
+  const code = `YN-${yyyy}-${mm}${dd}`;
+
+  const occasionLabels = {
+    birthday: 'Happy Birthday', spouse_birth: 'Happy Birthday',
+    wedding: 'Wedding Anniversary', child_school: 'Congratulations on Entering School',
+    birth: 'Welcome New Baby', child_birth: "Happy Birthday to Your Child"
+  };
+
+  document.getElementById('giftCardsContainer').innerHTML = `
+    <div class="gift-card">
+      <div class="gift-card-header">
+        <div class="gift-card-occasion">${occasionLabels[state.currentEventType] || 'Celebration'}</div>
+        <div class="gift-card-recipient">${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様</div>
+        <div class="gift-card-greeting">${state.currentEventLabel}おめでとうございます</div>
+      </div>
+      <div class="gift-card-message">
+        <div class="gift-card-message-quote">"</div>
+        <div class="gift-card-message-text">${state.currentMessage}</div>
+        <div class="gift-card-message-author">— 山田 典広</div>
+      </div>
+      <div class="gift-card-shop">
+        <div class="gift-card-shop-label">Recommended Restaurant</div>
+        <div class="gift-card-shop-name">${card.shop}</div>
+        <div class="gift-card-shop-meta">名古屋市${card.area}<br>★ Google ${card.rating}</div>
+      </div>
+      <div class="gift-card-discount">
+        <div>
+          <div class="gift-card-discount-label">Special Offer</div>
+          <div class="gift-card-discount-value">${card.discount}</div>
+          <div class="gift-card-discount-sub">${card.discountSub}</div>
+        </div>
+        <div style="font-size:32px;color:var(--gold-deep);opacity:0.4;">◆</div>
+      </div>
+      <div class="gift-card-footer">
+        <div class="gift-card-code">
+          引換コード
+          <div class="gift-card-code-num">${code}</div>
+        </div>
+        <div>
+          <div class="gift-card-expiry-label">VALID UNTIL</div>
+          <div class="gift-card-expiry-date">${card.expiry}</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('paginationDots').innerHTML = cards.map((_, i) =>
+    `<div class="pagination-dot ${i === state.currentCardIndex ? 'active' : ''}" onclick="setCardIndex(${i})"></div>`
+  ).join('');
+}
+
+function setCardIndex(i) {
+  state.currentCardIndex = i;
+  renderGiftCards();
+}
+
+function setMode(m) {
+  state.presentMode = m;
+  document.getElementById('modeScreenBtn').classList.toggle('active', m === 'screen');
+  document.getElementById('modePrintBtn').classList.toggle('active', m === 'print');
+  if (m === 'print') {
+    toast('印刷モード（本番ではA4出力）');
+    setTimeout(() => setMode('screen'), 1500);
+  }
+}
+
+function recordDelivery() {
+  showModal({
+    title: '提供完了を記録しますか？',
+    body: `${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様への ${state.selectedCoupons.length}件 のクーポン提供を履歴に記録します。`,
+    actions: [
+      { label: 'キャンセル', class: 'secondary' },
+      { label: '記録する', class: 'primary', onclick: doRecordDelivery }
+    ]
+  });
+}
+
+function doRecordDelivery() {
+  const yyyy = new Date().getFullYear();
+  const mm = String(new Date().getMonth() + 1).padStart(2, '0');
+  const dd = String(new Date().getDate()).padStart(2, '0');
+
+  state.selectedCoupons.forEach(cid => {
+    const card = COUPONS.find(c => c.id === cid);
+    data.history.push({
+      id: `H-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+      date: new Date().toISOString(),
+      customerId: state.currentCustomer.id,
+      customerName: `${state.currentCustomer.lastName} ${state.currentCustomer.firstName} 様`,
+      eventLabel: state.currentEventLabel,
+      couponShop: card.shop,
+      couponTitle: card.discount,
+      couponCode: `YN-${yyyy}-${mm}${dd}`,
+      message: state.currentMessage
+    });
+  });
+
+  toast(`✓ ${state.selectedCoupons.length}件 を記録しました`);
+
+  state.selectedCoupons = [];
+  state.currentMessage = '';
+  state.currentCustomer = null;
+
+  setTimeout(() => showView('home'), 600);
+}
+
+// ===================================================================
+// 履歴
+// ===================================================================
+function renderHistory() {
+  const list = [...data.history].sort((a, b) => b.date.localeCompare(a.date));
+  document.getElementById('historyCount').textContent = `${list.length} 件`;
+
+  if (list.length === 0) {
+    document.getElementById('historyList').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-state-icon">📋</div>
+        <div>まだ履歴がありません</div>
+      </div>
+    `;
+    return;
+  }
+
+  document.getElementById('historyList').innerHTML = list.map(h => `
+    <div class="history-item">
+      <div class="history-icon">✓</div>
+      <div class="history-body">
+        <div class="history-title">${h.customerName}</div>
+        <div class="history-sub">${h.eventLabel} ・ ${h.couponShop} ${h.couponTitle}</div>
+      </div>
+      <div class="history-date">${formatHistoryDate(h.date)}</div>
+    </div>
+  `).join('');
+}
+
+function formatHistoryDate(iso) {
+  const d = new Date(iso);
+  return `${d.getMonth() + 1}/${d.getDate()}<br>${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// ===================================================================
+// UI ユーティリティ
+// ===================================================================
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 2400);
+}
+
+function showModal({ title, body, actions }) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalBody').textContent = body;
+  const acts = document.getElementById('modalActions');
+  acts.innerHTML = '';
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = `modal-btn ${a.class || 'secondary'}`;
+    btn.textContent = a.label;
+    btn.onclick = () => {
+      closeModal();
+      if (a.onclick) a.onclick();
+    };
+    acts.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('modal').classList.remove('show');
+}
+
+document.getElementById('modal').addEventListener('click', e => {
+  if (e.target.id === 'modal') closeModal();
+});
+
+// 初期化
+renderHome();
+</script>
+</body>
+</html>
