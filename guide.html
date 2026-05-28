@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1e3a5f">
+<title>ライフイベント営業支援アプリ — 試用ガイド</title>
+<style>
+  :root {
+    --bg: #f5f3ee; --surface: #ffffff; --ink: #1a1f2e; --ink-soft: #4a5468;
+    --ink-muted: #8b94a8; --border: #e5e1d8; --accent: #1e3a5f; --accent-soft: #2c5282;
+    --warm: #d97a4a; --warm-bg: #fdf4ec; --success: #5a7a4f; --success-bg: #f0f4ea;
+    --gold: #b8860b; --gold-bg: #faf3e0; --gold-deep: #8b6914; --admin: #6b4423; --admin-bg: #f3ede4;
+    --shadow: 0 1px 2px rgba(26,31,46,0.04), 0 2px 8px rgba(26,31,46,0.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { font-family: 'Hiragino Kaku Gothic ProN','Yu Gothic','Noto Sans JP',sans-serif; background: var(--bg); color: var(--ink); -webkit-font-smoothing: antialiased; line-height: 1.7; }
+  .wrap { max-width: 540px; margin: 0 auto; padding-bottom: 60px; }
+  .hero { background: linear-gradient(135deg,#1e3a5f 0%,#2c5282 100%); color: #fff; padding: calc(28px + env(safe-area-inset-top)) 24px 28px; }
+  .hero-label { font-size: 11px; letter-spacing: 0.15em; opacity: 0.7; font-weight: 700; text-transform: uppercase; margin-bottom: 8px; }
+  .hero-title { font-size: 24px; font-weight: 700; line-height: 1.35; margin-bottom: 8px; }
+  .hero-sub { font-size: 14px; opacity: 0.85; line-height: 1.6; }
+  .section { padding: 24px 20px 0; }
+  .section-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: var(--accent); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; margin-right: 8px; flex-shrink: 0; }
+  .section-head { display: flex; align-items: center; margin-bottom: 14px; }
+  .section-title { font-size: 18px; font-weight: 700; }
+  .card { background: var(--surface); border-radius: 14px; box-shadow: var(--shadow); padding: 18px 20px; margin-bottom: 14px; }
+  .launch-btn { display: block; background: var(--accent); color: #fff; text-decoration: none; padding: 18px 20px; border-radius: 14px; text-align: center; font-size: 17px; font-weight: 700; margin-bottom: 12px; box-shadow: 0 4px 14px rgba(30,58,95,0.25); }
+  .launch-btn.admin { background: var(--admin); box-shadow: 0 4px 14px rgba(107,68,35,0.25); }
+  .launch-btn-sub { display: block; font-size: 12px; font-weight: 500; opacity: 0.8; margin-top: 4px; }
+  .step { display: flex; gap: 12px; padding: 12px 0; border-bottom: 1px solid var(--border); }
+  .step:last-child { border-bottom: none; }
+  .step-dot { width: 24px; height: 24px; background: var(--accent-soft); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0; margin-top: 1px; }
+  .step-body { flex: 1; }
+  .step-title { font-size: 15px; font-weight: 700; margin-bottom: 2px; }
+  .step-desc { font-size: 13px; color: var(--ink-soft); }
+  .step-desc .hl { background: var(--gold-bg); color: var(--gold-deep); font-weight: 700; padding: 1px 5px; border-radius: 4px; }
+  .check-list { list-style: none; }
+  .check-item { display: flex; gap: 10px; padding: 9px 0; font-size: 14px; align-items: flex-start; }
+  .check-item:not(:last-child) { border-bottom: 1px solid var(--border); }
+  .check-icon { color: var(--warm); font-weight: 700; flex-shrink: 0; }
+  .note { background: var(--gold-bg); border: 1px solid #e8d9b0; border-radius: 12px; padding: 14px 16px; margin-bottom: 14px; display: flex; gap: 10px; align-items: flex-start; }
+  .note-icon { width: 24px; height: 24px; background: var(--gold); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+  .note-body { flex: 1; font-size: 13px; color: var(--gold-deep); line-height: 1.6; }
+  .note-body strong { font-weight: 700; }
+  .feedback { background: var(--success-bg); border: 1px solid #c5d9b9; border-radius: 12px; padding: 16px 18px; }
+  .feedback-title { font-size: 14px; font-weight: 700; color: var(--success); margin-bottom: 8px; }
+  .feedback-list { list-style: none; }
+  .feedback-list li { font-size: 13px; color: var(--ink-soft); padding: 5px 0 5px 18px; position: relative; }
+  .feedback-list li::before { content: '・'; position: absolute; left: 2px; color: var(--success); }
+  .divider-label { font-size: 12px; font-weight: 700; color: var(--admin); letter-spacing: 0.05em; margin: 4px 0 10px; padding: 4px 10px; background: var(--admin-bg); border-radius: 6px; display: inline-block; }
+  .footer { text-align: center; padding: 28px 20px; color: var(--ink-muted); font-size: 12px; line-height: 1.8; }
+  .pill { display: inline-block; background: var(--bg); border: 1px solid var(--border); border-radius: 999px; padding: 3px 10px; font-size: 12px; font-weight: 600; color: var(--ink-soft); margin: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-label">試用ガイド · プロトタイプ v0.1</div>
+    <div class="hero-title">ライフイベント<br>営業支援アプリ</div>
+    <div class="hero-sub">顧客の誕生日や入学などの節目に合わせて、地域の名店クーポンを手渡す——その流れをスマホで試せます。所要 5分。</div>
+  </div>
+
+  <!-- 起動 -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">1</span><span class="section-title">まず開く</span></div>
+    <a class="launch-btn" href="https://spdlabo.github.io/lifeevent-coupon-demo/" target="_blank">
+      営業マン用アプリを開く
+      <span class="launch-btn-sub">山田さんがメインで触る画面</span>
+    </a>
+    <a class="launch-btn admin" href="https://spdlabo.github.io/lifeevent-coupon-demo/admin.html" target="_blank">
+      運営用アプリを開く
+      <span class="launch-btn-sub">審査・トラブル対応・配信の管理画面</span>
+    </a>
+    <div class="note">
+      <div class="note-icon">i</div>
+      <div class="note-body">
+        どちらも<strong>サンプルデータ入り</strong>で、何をどう触っても壊れません。元に戻したいときは画面<strong>左上の「↻ デモ初期化」</strong>を押すだけ。ページを再読み込みしても初期状態に戻ります。
+      </div>
+    </div>
+    <div class="note">
+      <div class="note-icon">＋</div>
+      <div class="note-body">
+        スマホで開いたあと、ブラウザのメニューから<strong>「ホーム画面に追加」</strong>を選ぶと、本物のアプリのようにアイコンから起動できます。
+      </div>
+    </div>
+  </div>
+
+  <!-- 営業マン用の流れ -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">2</span><span class="section-title">営業マン用 — 試す流れ</span></div>
+    <div class="card">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">ホームで「本日」の顧客を見る</div>
+          <div class="step-desc">佐藤様（誕生日）と田中様（入学）が <span class="hl">本日</span> に出ています。佐藤様の<strong>「クーポンを選ぶ」</strong>を押す。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">クーポンを選ぶ（最大3件）</div>
+          <div class="step-desc">佐藤様の趣味（日本酒・家族外食）に合う店が<strong>緑色で強調</strong>されます。気に入った店を1〜3件タップ。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">手書きメッセージを添える</div>
+          <div class="step-desc">テンプレートは使わず、<strong>自分の言葉で一言</strong>。これが「機械的な配布」と差がつく一番のポイント。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">4</div>
+        <div class="step-body">
+          <div class="step-title">お客様に見せる</div>
+          <div class="step-desc">ギフトカード風の画面が完成。この画面を見せる、または印刷して手渡し。最後に<strong>「提供完了を記録」</strong>を押すと履歴に残ります。</div>
+        </div>
+      </div>
+    </div>
+    <div class="note">
+      <div class="note-icon">✓</div>
+      <div class="note-body">
+        他にも、画面下の<strong>「顧客」</strong>から新しいお客様を登録したり（同姓同名は自動で警告）、<strong>「履歴」</strong>で過去に誰へ何を渡したか確認できます。一通り触ってみてください。
+      </div>
+    </div>
+  </div>
+
+  <!-- 運営用の流れ -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">3</span><span class="section-title">運営用 — 試す流れ</span></div>
+    <span class="divider-label">山田さんが運営として使う画面</span>
+    <div class="card">
+      <div class="step">
+        <div class="step-dot">1</div>
+        <div class="step-body">
+          <div class="step-title">加盟店を審査する</div>
+          <div class="step-desc">下メニュー<strong>「審査」</strong>→ 店を開く → チェック7項目をタップ。全部チェックが付くと<strong>「承認」</strong>ボタンが押せるようになります。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">2</div>
+        <div class="step-body">
+          <div class="step-title">トラブルに対応する</div>
+          <div class="step-desc">下メニュー<strong>「トラブル」</strong>→ 案件を開く。店への連絡・代替クーポン・お詫び・一時停止が記録でき、最後に推薦権をどうするか判定します。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-dot">3</div>
+        <div class="step-body">
+          <div class="step-title">月次配信を確認する</div>
+          <div class="step-desc">下メニュー<strong>「配信」</strong>。今月の新規加盟・更新・停止が自動でまとまり、営業マン全員へ一斉配信する準備ができます。</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- フィードバック -->
+  <div class="section">
+    <div class="section-head"><span class="section-num">4</span><span class="section-title">教えてほしいこと</span></div>
+    <div class="feedback">
+      <div class="feedback-title">触ってみて、ここを聞かせてください</div>
+      <ul class="feedback-list">
+        <li>直感的に操作できたか（迷った画面はどこか）</li>
+        <li>営業マンが実際に現場で使えそうか</li>
+        <li>文字の大きさ・ボタンの押しやすさ</li>
+        <li>「この機能が足りない」「これは要らない」</li>
+        <li>クーポンの見た目・お客様に見せたときの印象</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="footer">
+    ライフイベント営業支援アプリ プロトタイプ v0.1<br>
+    これは動作確認用の試作版です。お客様の個人情報は<br>どこにも保存されません（本番では端末内のみ保存）。<br>
+    気づいた点はどんな小さなことでもお寄せください。
+  </div>
+
+</div>
+</body>
+</html>
